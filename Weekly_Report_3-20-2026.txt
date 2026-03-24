@@ -1,0 +1,57 @@
+✅ Weekly Team Roll‑Up
+
+Week Ending: 3/20/2026
+
+Portfolio / Team: Cloud & Network Architecture | Etinosa Onaiwu
+
+Prepared By: Etinosa Onaiwu
+
+
+1. Executive Summary
+
+• Draft completion of the MCBB 3.0 AWS Cloud WAN network architecture design and environment segmentation planning.
+
+• Built and documented the base MCBB 3.0 AWS lab environment in AWS Dev Account and tested traffic flow within the cloud, across regions, egress to the internet, and traffic inspection.
+  Still work in progress: https://enterprise-confluence.onefiserv.net/spaces/FTSNE/pages/1079413677/MCBB+3.0+AWS+LAB-POC
+
+• Worked on Cloud Secure DMZ documentation alongside Onyekachi.
+  Reference: https://enterprise-confluence.onefiserv.net/spaces/FTSNE/pages/1075541852/Onyekachi+Uchendu
+
+
+2. Key Accomplishments
+
+• Completed iterative design work on MCBB 3.0 AWS Cloud WAN architecture diagrams
+  Impact: Delivers a stakeholder-ready visual reference for the target-state Cloud AWS network topology, supporting design reviews and team alignment ahead of full build-out
+
+• Published MCBB 3.0 AWS design document and environment segmentation plan
+  Impact: Formalizes architecture decisions and segmentation strategy as the authoritative reference for the lab/POC — Still in draft phase
+
+• Built and validated base MCBB 3.0 lab environment in AWS Dev Account — confirmed end-to-end traffic flow across cloud regions, egress to internet, and traffic inspection
+  Impact: Proves out the core Cloud WAN data path and validates the architecture is functionally sound before codification; de-risks the IaC phase
+
+• Created MCBB 3.0 lab build documentation
+  Impact: Enables team members to independently replicate/test the CloudWAN build out
+
+• Contributed to Cloud Secure DMZ documentation (Onyekachi Uchendu workstream)
+  Impact: Advances cross-team documentation coverage for the secure Cloud DMZ design, supporting broader Cloud network architecture readiness
+
+
+3. Work In Progress
+
+• MCBB 3.0 Design Validation – Testing AWS design requirements against the current lab setup
+• Access & Onboarding – GitLab access confirmed and in place as of 3/20; working on getting access to the correct group to begin codifying the existing environment
+• Subnet Migration – Working on getting approved lab subnets allocated; coordinating with Scott on subnet approval to avoid IP overlap issues
+
+
+4. Risks / Blockers / Dependencies
+
+• DX circuit availability to integrate into AWS Cloud WAN — dependency on hybrid test environment readiness
+  Mitigation / Next Step: Tracking with hybrid test team; integration work will be sequenced once circuit availability is confirmed
+
+
+5. Planned for Next Week
+
+• Continue design requirement validation for MCBB 3.0
+• Begin IaC development for the current lab setup — GitLab access now unblocked, pending access to the correct group
+• Progress subnet swap from current lab subnets to approved allocated subnets — coordinating with Scott to avoid IP overlap issues
+• Meet with Anton and Scott to iterate over the design and lab test results to date; gather feedback on design requirements and clarify open items
