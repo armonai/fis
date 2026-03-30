@@ -38,11 +38,11 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 
 <h2>1. On-Premises Topology</h2>
 <div class="model">
-<p>3 Data Centers connected via <strong>CoreOne</strong> WAN backbone. 6 DX Edge PoPs provide geographic diversity. Each PoP is an interconnect point — not a destination. Any PoP reaches any DC via CoreOne. All DCs advertise <strong>10.0.0.0/8</strong> summary.</p>
+<p>3 Data Centers connected via <strong>on-prem WAN</strong> WAN backbone. 6 DX Edge PoPs provide geographic diversity. Each PoP is an interconnect point — not a destination. Any PoP reaches any DC via on-prem WAN. All DCs advertise <strong>10.0.0.0/8</strong> summary.</p>
 <div class="svg-box">
 <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
   <rect x="50" y="220" width="800" height="70" rx="8" fill="#eceff1" stroke="#546e7a" stroke-width="2"/>
-  <text x="450" y="248" text-anchor="middle" font-size="14" font-weight="bold" fill="#37474f">CoreOne WAN Backbone (MPLS / SD-WAN)</text>
+  <text x="450" y="248" text-anchor="middle" font-size="14" font-weight="bold" fill="#37474f">On-Premises Inter-Site WAN</text>
   <rect x="120" y="260" width="80" height="25" rx="4" fill="#fff" stroke="#546e7a"/>
   <text x="160" y="277" text-anchor="middle" font-size="11" fill="#333">DC 1</text>
   <rect x="410" y="260" width="80" height="25" rx="4" fill="#fff" stroke="#546e7a"/>
@@ -68,7 +68,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
   <circle cx="790" cy="150" r="28" fill="#fff" stroke="#ff6f00" stroke-width="2"/>
   <text x="790" y="145" text-anchor="middle" font-size="10" font-weight="bold">Ash</text>
   <text x="790" y="158" text-anchor="middle" font-size="8" fill="#666">DX</text>
-  <!-- Lines to CoreOne -->
+  <!-- Lines to on-prem WAN -->
   <line x1="80" y1="178" x2="80" y2="220" stroke="#546e7a" stroke-width="1.5"/>
   <line x1="210" y1="178" x2="210" y2="220" stroke="#546e7a" stroke-width="1.5"/>
   <line x1="370" y1="178" x2="370" y2="220" stroke="#546e7a" stroke-width="1.5"/>
@@ -190,11 +190,11 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
   <text x="107" y="320" font-size="9" fill="#ff6f00">10/8</text>
   <text x="380" y="320" font-size="9" fill="#ff6f00">10/8</text>
   <text x="700" y="320" font-size="9" fill="#ff6f00">10/8</text>
-  <!-- CoreOne -->
+  <!-- on-prem WAN -->
   <rect x="30" y="340" width="840" height="50" rx="6" fill="#eceff1" stroke="#546e7a" stroke-width="2"/>
-  <text x="450" y="362" text-anchor="middle" font-size="12" font-weight="bold" fill="#37474f">CoreOne WAN Backbone</text>
+  <text x="450" y="362" text-anchor="middle" font-size="12" font-weight="bold" fill="#37474f">On-Premises WAN</text>
   <text x="450" y="378" text-anchor="middle" font-size="10" fill="#666">DC 1 — DC 2 — DC 3</text>
-  <!-- Lines from PoPs to CoreOne -->
+  <!-- Lines from PoPs to on-prem WAN -->
   <line x1="57" y1="312" x2="57" y2="340" stroke="#546e7a" stroke-width="1.5"/>
   <line x1="157" y1="312" x2="157" y2="340" stroke="#546e7a" stroke-width="1.5"/>
   <line x1="307" y1="312" x2="307" y2="340" stroke="#546e7a" stroke-width="1.5"/>
@@ -224,7 +224,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <div class="te-box">
 <h3>Traffic Engineering</h3>
 <ul>
-<li><strong>Layer 1 — Within DXGW (SJC/Denver pair):</strong> No preference — ECMP across both DX PoPs. Both are equal paths to CoreOne. DXGW load-balances. If one PoP fails, the other takes 100%. DC-level routing is CoreOne's job.</li>
+<li><strong>Layer 1 — Within DXGW (SJC/Denver pair):</strong> No preference — ECMP across both DX PoPs. Both are equal paths to on-prem WAN. DXGW load-balances. If one PoP fails, the other takes 100%. DC-level routing is on-prem WAN's job.</li>
 <li><strong>Layer 2 — Local DXGW preference:</strong> Cloud WAN routing policy — <code>prepend-asn-list</code> inbound on cross-region DXGW attachments at each CNE, so local DXGW is always preferred</li>
 <li><strong>Layer 3 — Inter-region failover order:</strong> Cloud WAN <code>associate-routing-policy</code> on CNE-to-CNE edge pairs — prepend on distant regions to control which cross-region DXGW is preferred when local DXGW fails</li>
 <li><strong>Note:</strong> Each DXGW has 3 Cloud WAN attachments (one per CNE) — routing policies can be applied per attachment for granular control</li>
@@ -249,7 +249,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <h2>3. Model 2: Regional DXGW — Local VIF Only</h2>
 <div class="model">
 <p><span class="tag tag-green">Unlimited Regions</span> <span class="tag tag-green">Low Complexity</span> <span class="tag tag-blue">Lowest Cost</span></p>
-<p>1 DXGW per region. Each DX PoP pair feeds into its <strong>local DXGW only</strong> (1 VIF per circuit). Cross-region failover via Cloud WAN backbone. CoreOne carries rerouted traffic between DX locations.</p>
+<p>1 DXGW per region. Each DX PoP pair feeds into its <strong>local DXGW only</strong> (1 VIF per circuit). Cross-region failover via Cloud WAN backbone. Inter-site WAN carries rerouted traffic between DX locations.</p>
 <div class="svg-box">
 <svg viewBox="0 0 900 440" xmlns="http://www.w3.org/2000/svg">
   <!-- CNEs -->
@@ -303,9 +303,9 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
   <line x1="465" y1="200" x2="425" y2="150" stroke="#ff6f00" stroke-width="2"/>
   <line x1="720" y1="200" x2="755" y2="150" stroke="#ff6f00" stroke-width="2"/>
   <line x1="795" y1="200" x2="755" y2="150" stroke="#ff6f00" stroke-width="2"/>
-  <!-- CoreOne -->
+  <!-- on-prem WAN -->
   <rect x="30" y="270" width="840" height="45" rx="6" fill="#eceff1" stroke="#546e7a" stroke-width="2"/>
-  <text x="450" y="290" text-anchor="middle" font-size="11" font-weight="bold" fill="#37474f">CoreOne — DC 1 / DC 2 / DC 3</text>
+  <text x="450" y="290" text-anchor="middle" font-size="11" font-weight="bold" fill="#37474f">DC 1 — DC 2 — DC 3 (independent, inter-site WAN)</text>
   <text x="450" y="305" text-anchor="middle" font-size="9" fill="#666">On-prem WAN carries rerouted traffic between DX locations</text>
   <line x1="80" y1="240" x2="80" y2="270" stroke="#546e7a" stroke-width="1.5"/>
   <line x1="155" y1="240" x2="155" y2="270" stroke="#546e7a" stroke-width="1.5"/>
@@ -328,13 +328,13 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <tr><th>Tier</th><th>Trigger</th><th>Path</th><th>Latency</th></tr>
 <tr><td><strong>1</strong></td><td>SJC DX fails</td><td>DXGW-West → Denver VIF (same DXGW, auto BGP)</td><td>None</td></tr>
 <tr><td><strong>2</strong></td><td>Both SJC+Denver fail</td><td>DXGW-West withdraws → <strong>Cloud WAN backbone</strong> → DXGW-Central or East</td><td>+60-100ms</td></tr>
-<tr><td><strong>3</strong></td><td>Last mile to DC</td><td>CoreOne carries traffic from surviving DX location → target DC</td><td>+WAN latency</td></tr>
+<tr><td><strong>3</strong></td><td>Last mile to DC</td><td>On-prem WAN carries traffic from surviving DX location → target DC</td><td>+WAN latency</td></tr>
 </table>
 
 <div class="te-box">
 <h3>Traffic Engineering</h3>
 <ul>
-<li><strong>Intra-DXGW (SJC vs Denver):</strong> ECMP — no preference. Both PoPs are equal paths to CoreOne. DXGW load-balances across both VIFs.</li>
+<li><strong>Intra-DXGW (SJC vs Denver):</strong> ECMP — no preference. Both PoPs are equal paths to on-prem WAN. DXGW load-balances across both VIFs.</li>
 <li><strong>Inter-region failover order:</strong> Cloud WAN <code>associate-routing-policy</code> with <code>prepend-asn-list</code> on CNE-to-CNE edge pairs</li>
 <li><em>Cannot</em> apply different Cloud WAN policies per circuit (both behind same DXGW attachment)</li>
 </ul>
@@ -369,22 +369,22 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
   <!-- 6 DXGWs -->
   <circle cx="80" cy="115" r="24" fill="#fff" stroke="#1565c0" stroke-width="2"/>
   <text x="80" y="112" text-anchor="middle" font-size="7" font-weight="bold">DXGW</text>
-  <text x="80" y="122" text-anchor="middle" font-size="7">W-Pri</text>
+  <text x="80" y="122" text-anchor="middle" font-size="7">W-1</text>
   <circle cx="155" cy="115" r="24" fill="#fff" stroke="#1565c0" stroke-width="1.5" stroke-dasharray="4,2"/>
   <text x="155" y="112" text-anchor="middle" font-size="7" font-weight="bold">DXGW</text>
-  <text x="155" y="122" text-anchor="middle" font-size="7">W-Sec</text>
+  <text x="155" y="122" text-anchor="middle" font-size="7">W-2</text>
   <circle cx="390" cy="115" r="24" fill="#fff" stroke="#1565c0" stroke-width="2"/>
   <text x="390" y="112" text-anchor="middle" font-size="7" font-weight="bold">DXGW</text>
-  <text x="390" y="122" text-anchor="middle" font-size="7">C-Pri</text>
+  <text x="390" y="122" text-anchor="middle" font-size="7">C-1</text>
   <circle cx="465" cy="115" r="24" fill="#fff" stroke="#1565c0" stroke-width="1.5" stroke-dasharray="4,2"/>
   <text x="465" y="112" text-anchor="middle" font-size="7" font-weight="bold">DXGW</text>
-  <text x="465" y="122" text-anchor="middle" font-size="7">C-Sec</text>
+  <text x="465" y="122" text-anchor="middle" font-size="7">C-2</text>
   <circle cx="720" cy="115" r="24" fill="#fff" stroke="#1565c0" stroke-width="2"/>
   <text x="720" y="112" text-anchor="middle" font-size="7" font-weight="bold">DXGW</text>
-  <text x="720" y="122" text-anchor="middle" font-size="7">E-Pri</text>
+  <text x="720" y="122" text-anchor="middle" font-size="7">E-1</text>
   <circle cx="795" cy="115" r="24" fill="#fff" stroke="#1565c0" stroke-width="1.5" stroke-dasharray="4,2"/>
   <text x="795" y="112" text-anchor="middle" font-size="7" font-weight="bold">DXGW</text>
-  <text x="795" y="122" text-anchor="middle" font-size="7">E-Sec</text>
+  <text x="795" y="122" text-anchor="middle" font-size="7">E-2</text>
   <!-- DXGW to local CNE -->
   <line x1="80" y1="91" x2="115" y2="60" stroke="#1565c0" stroke-width="2.5"/>
   <line x1="155" y1="91" x2="115" y2="60" stroke="#1565c0" stroke-width="1.5" stroke-dasharray="4,2"/>
@@ -412,9 +412,9 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
   <line x1="465" y1="192" x2="465" y2="139" stroke="#ff6f00" stroke-width="2"/>
   <line x1="720" y1="192" x2="720" y2="139" stroke="#ff6f00" stroke-width="2"/>
   <line x1="795" y1="192" x2="795" y2="139" stroke="#ff6f00" stroke-width="2"/>
-  <!-- CoreOne -->
+  <!-- on-prem WAN -->
   <rect x="30" y="255" width="840" height="40" rx="6" fill="#eceff1" stroke="#546e7a" stroke-width="2"/>
-  <text x="450" y="280" text-anchor="middle" font-size="11" font-weight="bold" fill="#37474f">CoreOne — DC 1 / DC 2 / DC 3</text>
+  <text x="450" y="280" text-anchor="middle" font-size="11" font-weight="bold" fill="#37474f">DC 1 — DC 2 — DC 3 (independent, inter-site WAN)</text>
   <line x1="80" y1="228" x2="80" y2="255" stroke="#546e7a" stroke-width="1.5"/>
   <line x1="155" y1="228" x2="155" y2="255" stroke="#546e7a" stroke-width="1.5"/>
   <line x1="390" y1="228" x2="390" y2="255" stroke="#546e7a" stroke-width="1.5"/>
@@ -430,7 +430,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
   <circle cx="65" cy="325" r="8" fill="#fff" stroke="#1565c0" stroke-width="2"/>
   <text x="80" y="329" font-size="9">Primary DXGW (solid)</text>
   <circle cx="250" cy="325" r="8" fill="#fff" stroke="#1565c0" stroke-width="1.5" stroke-dasharray="3,2"/>
-  <text x="265" y="329" font-size="9">Secondary DXGW (dashed, AS-path prepended by CWAN policy)</text>
+  <text x="265" y="329" font-size="9">Second DXGW per region (Cloud WAN routing policy controls preference)</text>
   <text x="55" y="350" font-size="9" fill="#2e7d32">Each DX circuit → its own DXGW → 1 VIF → local CNE. 6 DXGWs, 6 attachments, full per-circuit visibility.</text>
 </svg>
 </div>
@@ -438,15 +438,15 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <h3>Failover Tiers</h3>
 <table>
 <tr><th>Tier</th><th>Trigger</th><th>Path</th><th>Latency</th></tr>
-<tr><td><strong>1</strong></td><td>SJC DX fails</td><td>DXGW-W-Pri withdraws → Cloud WAN selects DXGW-W-Sec (prepended, same CNE)</td><td>None</td></tr>
-<tr><td><strong>2</strong></td><td>Both SJC+Denver fail</td><td>Both withdraw → Cloud WAN backbone → deterministic next region (routing policy)</td><td>+60-100ms</td></tr>
-<tr><td><strong>3</strong></td><td>Last mile</td><td>CoreOne carries traffic to target DC</td><td>+WAN latency</td></tr>
+<tr><td><strong>1</strong></td><td>SJC DX fails</td><td>SJC DXGW withdraws → Cloud WAN selects Denver DXGW (same CNE)</td><td>None</td></tr>
+<tr><td><strong>2</strong></td><td>Both West DXGWs fail</td><td>Both withdraw → Cloud WAN backbone → deterministic next region (routing policy)</td><td>+60-100ms</td></tr>
+<tr><td><strong>3</strong></td><td>Last mile</td><td>On-prem WAN carries traffic to target DC</td><td>+WAN latency</td></tr>
 </table>
 
 <div class="te-box">
 <h3>Traffic Engineering (Fully Validated ✅)</h3>
 <ul>
-<li><strong>Primary vs Secondary:</strong> On-prem AS-path prepend on secondary circuit (e.g., AS 65002 65002 65002)</li>
+<li><strong>Per-PoP DXGW preference:</strong> Cloud WAN routing policy — prepend-asn-list inbound on one DXGW to make the other preferred within same CNE</li>
 <li><strong>Inter-region failover order:</strong> Cloud WAN <code>associate-routing-policy</code> + <code>prepend-asn-list</code> on CNE-to-CNE pairs</li>
 <li><strong>Per-region ASNs:</strong> East=65001, West=65002, EU=65003 — enables independent TE per location</li>
 <li><strong>Per-circuit Cloud WAN visibility:</strong> Each DXGW has its own attachment — see BGP routes per circuit</li>
@@ -474,7 +474,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <h2>5. Model 4: Hybrid — Local DXGW + Global Backup DXGW</h2>
 <div class="model">
 <p><span class="tag tag-green">Unlimited Local</span> <span class="tag tag-blue">No On-Prem WAN Dependency</span> <span class="tag tag-orange">Medium Complexity</span></p>
-<p>3 local DXGWs handle normal traffic. 1 global DXGW receives a VIF from one PoP at each location — provides AWS-backbone-only backup. No CoreOne dependency for Tier 2.</p>
+<p>3 local DXGWs handle normal traffic. 1 global DXGW receives a VIF from one PoP at each location — provides AWS-backbone-only backup. No on-prem WAN dependency for Tier 2.</p>
 <div class="svg-box">
 <svg viewBox="0 0 900 440" xmlns="http://www.w3.org/2000/svg">
   <!-- CNEs -->
@@ -531,9 +531,9 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
   <line x1="80" y1="252" x2="400" y2="185" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="4,3"/>
   <line x1="350" y1="252" x2="415" y2="200" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="4,3"/>
   <line x1="720" y1="252" x2="450" y2="185" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="4,3"/>
-  <!-- CoreOne -->
+  <!-- on-prem WAN -->
   <rect x="30" y="310" width="840" height="40" rx="6" fill="#eceff1" stroke="#546e7a" stroke-width="2"/>
-  <text x="450" y="335" text-anchor="middle" font-size="11" font-weight="bold" fill="#37474f">CoreOne — DC 1 / DC 2 / DC 3</text>
+  <text x="450" y="335" text-anchor="middle" font-size="11" font-weight="bold" fill="#37474f">DC 1 — DC 2 — DC 3 (independent, inter-site WAN)</text>
   <line x1="80" y1="288" x2="80" y2="310" stroke="#546e7a" stroke-width="1.5"/>
   <line x1="155" y1="288" x2="155" y2="310" stroke="#546e7a" stroke-width="1.5"/>
   <line x1="350" y1="288" x2="350" y2="310" stroke="#546e7a" stroke-width="1.5"/>
@@ -546,7 +546,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
   <text x="90" y="384" font-size="9">DX→local DXGW (normal path)</text>
   <line x1="320" y1="380" x2="350" y2="380" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="4,3"/>
   <text x="355" y="384" font-size="9" fill="#2e7d32">DX→Global DXGW (1 per location, backup via AWS backbone)</text>
-  <text x="55" y="402" font-size="9">Global DXGW: 3 VIFs (one per DX location) → 1 CWAN attachment. No CoreOne dependency for Tier 2.</text>
+  <text x="55" y="402" font-size="9">Global DXGW: 3 VIFs (one per DX location) → 1 CWAN attachment. No on-prem WAN dependency for Tier 2.</text>
 </svg>
 </div>
 
@@ -570,7 +570,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <div class="te-box">
 <h3>Traffic Engineering</h3>
 <ul>
-<li><strong>Intra-DXGW (SJC vs Denver):</strong> ECMP — no preference. Both PoPs are equal paths to CoreOne. If one PoP fails, the other takes 100%.</li>
+<li><strong>Intra-DXGW (SJC vs Denver):</strong> ECMP — no preference. Both PoPs are equal paths to on-prem WAN. If one PoP fails, the other takes 100%.</li>
 <li><strong>Local vs Global DXGW:</strong> Cloud WAN routing policy — <code>prepend-asn-list</code> inbound on Global DXGW attachment to make it less preferred than local DXGWs</li>
 <li><strong>Inter-region failover via Global DXGW:</strong> Global DXGW receives VIFs from multiple DX locations — Cloud WAN sees one attachment with multiple paths. On-prem BGP controls which DX location the Global DXGW prefers</li>
 <li><strong>Limitation:</strong> Global DXGW is a single Cloud WAN attachment — cannot apply per-location routing policies within it</li>
@@ -595,8 +595,8 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <tr><td style="text-align:left"><strong>CWAN attachments</strong></td><td>3-9</td><td>3</td><td>6</td><td>4</td></tr>
 <tr><td style="text-align:left"><strong>Intra-region TE</strong></td><td>On-prem BGP</td><td>On-prem BGP</td><td>On-prem BGP +<br>CWAN policy</td><td>On-prem BGP</td></tr>
 <tr><td style="text-align:left"><strong>Inter-region TE</strong></td><td>CWAN policy</td><td>CWAN policy</td><td>CWAN policy</td><td>CWAN policy</td></tr>
-<tr><td style="text-align:left"><strong>Tier 2 failover path</strong></td><td style="color:#2e7d32"><strong>AWS backbone<br>(no extra hop)</strong></td><td style="color:#c62828">CoreOne WAN<br>(+backbone)</td><td style="color:#c62828">CoreOne WAN<br>(+backbone)</td><td style="color:#2e7d32"><strong>AWS backbone</strong></td></tr>
-<tr><td style="text-align:left"><strong>CoreOne WAN needed?</strong></td><td style="color:#2e7d32"><strong>No</strong></td><td style="color:#c62828"><strong>Yes</strong></td><td style="color:#c62828"><strong>Yes</strong></td><td style="color:#2e7d32"><strong>No</strong></td></tr>
+<tr><td style="text-align:left"><strong>Tier 2 failover path</strong></td><td style="color:#2e7d32"><strong>AWS backbone<br>(no extra hop)</strong></td><td style="color:#c62828">on-prem WAN WAN<br>(+backbone)</td><td style="color:#c62828">on-prem WAN WAN<br>(+backbone)</td><td style="color:#2e7d32"><strong>AWS backbone</strong></td></tr>
+<tr><td style="text-align:left"><strong>on-prem WAN WAN needed?</strong></td><td style="color:#2e7d32"><strong>No</strong></td><td style="color:#c62828"><strong>Yes</strong></td><td style="color:#c62828"><strong>Yes</strong></td><td style="color:#2e7d32"><strong>No</strong></td></tr>
 <tr><td style="text-align:left"><strong>Per-circuit visibility</strong></td><td>Partial</td><td style="color:#c62828">No</td><td style="color:#2e7d32"><strong>Yes</strong></td><td>Partial</td></tr>
 <tr><td style="text-align:left"><strong>Complexity</strong></td><td style="color:#c62828">High</td><td style="color:#2e7d32">Low</td><td>Medium</td><td>Medium</td></tr>
 <tr><td style="text-align:left"><strong>Cost</strong></td><td style="color:#c62828">Highest</td><td style="color:#2e7d32">Lowest</td><td>Medium</td><td>Medium</td></tr>
@@ -611,16 +611,16 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <h3>🏆 For Scale + Full Control: Model 3 (Per-Circuit DXGW)</h3>
 <p>Best for enterprise environments needing per-circuit traffic engineering from the Cloud WAN side. Scales infinitely. Full visibility. <strong>Tested and validated</strong> — all 3 regions, all failover tiers, deterministic inter-region routing confirmed.</p>
 <ul>
-<li>Per-region ASNs (65001/65002/65003) with on-prem AS-path prepend for primary/secondary</li>
+<li>Per-region ASNs (65001/65002/65003) with Cloud WAN routing policies for per-PoP DXGW preference</li>
 <li>Cloud WAN routing policies for deterministic inter-region failover order</li>
-<li>Requires reliable CoreOne WAN for Tier 2 failover last-mile</li>
+<li>Requires reliable on-prem WAN for Tier 2 failover last-mile</li>
 </ul>
 
 <h3>🥈 For Simplicity: Model 2 (Regional DXGW)</h3>
-<p>Fewest moving parts. On-prem BGP handles primary/secondary within each DXGW. Choose this if CoreOne is reliable and you don't need per-circuit Cloud WAN visibility.</p>
+<p>Fewest moving parts. DXGW ECMPs across both PoPs within each region. Choose this if on-prem WAN is reliable and you don't need per-circuit Cloud WAN visibility.</p>
 
-<h3>🥉 For No CoreOne Dependency: Model 4 (Hybrid)</h3>
-<p>If CoreOne WAN between DX locations is unreliable, the Global DXGW ensures AWS backbone carries all failover traffic without touching CoreOne.</p>
+<h3>🥉 For No On-Prem WAN Dependency: Model 4 (Hybrid)</h3>
+<p>If on-prem WAN between DX locations is unreliable, the Global DXGW ensures AWS backbone carries all failover traffic without touching on-prem WAN.</p>
 
 <h3>⚠️ For 3 Regions Only: Model 1 (Full Criss-Cross)</h3>
 <p>Maximum redundancy and fastest failover (no backbone hop). But <strong>hard limit at 4 regions</strong>. Only choose if you're certain you won't scale beyond 4 regions.</p>
@@ -632,10 +632,10 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <p>Tested in account 283811353571 using Site-to-Site VPN to simulate DX circuits. Per-region ASNs, on-prem AS-path prepend, Cloud WAN routing policies for deterministic failover.</p>
 
 <table>
-<tr><th>Region</th><th>Baseline (local)</th><th>Tier 1 (kill primary)</th><th>Tier 2 (kill both)</th><th>Restore</th></tr>
-<tr><td><strong>us-west</strong></td><td>✅ ~3ms via primary</td><td>✅ ~2.3ms via secondary</td><td>✅ ~62ms via <strong>us-east</strong> (deterministic)</td><td>✅ ~3ms</td></tr>
-<tr><td><strong>us-east</strong></td><td>✅ ~3.6ms via primary</td><td>✅ ~3.3ms via secondary</td><td>✅ ~63ms via <strong>us-west</strong> (deterministic)</td><td>✅ restored</td></tr>
-<tr><td><strong>eu-central</strong></td><td>✅ ~3.8ms via primary</td><td>✅ ~3.8ms via secondary</td><td>✅ ~97ms via <strong>us-east</strong> (deterministic)</td><td>✅ restored</td></tr>
+<tr><th>Region</th><th>Baseline (local)</th><th>Tier 1 (kill one PoP)</th><th>Tier 2 (kill both)</th><th>Restore</th></tr>
+<tr><td><strong>us-west</strong></td><td>✅ ~3ms via local PoP</td><td>✅ ~2.3ms via remaining PoP</td><td>✅ ~62ms via <strong>us-east</strong> (deterministic)</td><td>✅ ~3ms</td></tr>
+<tr><td><strong>us-east</strong></td><td>✅ ~3.6ms via local PoP</td><td>✅ ~3.3ms via remaining PoP</td><td>✅ ~63ms via <strong>us-west</strong> (deterministic)</td><td>✅ restored</td></tr>
+<tr><td><strong>eu-central</strong></td><td>✅ ~3.8ms via local PoP</td><td>✅ ~3.8ms via remaining PoP</td><td>✅ ~97ms via <strong>us-east</strong> (deterministic)</td><td>✅ restored</td></tr>
 </table>
 
 <div class="te-box">
