@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MCBB 3.0 — DX Connectivity Design Options</title>
+<style>
+body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px 40px;background:#f5f5f5;color:#333}
+h1{color:#232f3e;border-bottom:3px solid #ff9900;padding-bottom:10px}
+h2{color:#232f3e;margin-top:40px;border-left:4px solid #ff9900;padding-left:12px}
+h3{color:#146eb4}
+.model{background:#fff;border-radius:8px;padding:25px;margin:20px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.diagram{background:#1a1a2e;color:#0f0;font-family:'Courier New',monospace;font-size:13px;padding:20px;border-radius:6px;overflow-x:auto;white-space:pre;line-height:1.4}
+table{border-collapse:collapse;width:100%;margin:15px 0}
+th{background:#232f3e;color:#fff;padding:10px 14px;text-align:left}
+td{padding:8px 14px;border:1px solid #ddd}
+tr:nth-child(even){background:#f9f9f9}
+.pro{color:#2e7d32;font-weight:600}
+.con{color:#c62828;font-weight:600}
+.tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:2px}
+.tag-green{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
+.tag-red{background:#ffebee;color:#c62828;border:1px solid #ef9a9a}
+.tag-blue{background:#e3f2fd;color:#1565c0;border:1px solid #90caf9}
+.tag-orange{background:#fff3e0;color:#e65100;border:1px solid #ffcc80}
+.recommend{background:#e8f5e9;border:2px solid #4caf50;border-radius:8px;padding:20px;margin:20px 0}
+.recommend h3{color:#2e7d32}
+.failover-table td:nth-child(1){font-weight:600;width:80px}
+.header-bar{background:#232f3e;color:#fff;padding:15px 25px;border-radius:8px;margin-bottom:30px}
+.header-bar p{margin:5px 0;color:#aaa;font-size:14px}
+.comparison th{font-size:13px}
+.comparison td{text-align:center;font-size:13px}
+</style>
+</head>
+<body>
+<div class="header-bar">
+<h1 style="color:#ff9900;border:none;padding:0;margin:0">MCBB 3.0 — DX Connectivity Design Options</h1>
+<p>Account: 283811353571 | Core Network: core-network-0196bd7ef7473ce8e | Date: March 30, 2026</p>
+</div>
+
+<h2>Requirements</h2>
+<ul>
+<li>2 Data Centers per DX location (SJC+Denver, Chi+Dal, ATL+Ash)</li>
+<li>3 DX locations: West, Central, East</li>
+<li>3+ AWS Regions: us-west-1, us-east-1, eu-central-1 (must scale beyond)</li>
+<li>All DCs advertise <strong>10.0.0.0/8</strong> summary via BGP</li>
+<li>All traffic inspected by <strong>Network Firewall</strong> (single inspection VPC per region)</li>
+<li>Deterministic routing: each region prefers its local DX</li>
+<li>Multi-tier failover with traffic engineering control</li>
+</ul>
+
+<!-- MODEL 1 -->
+<div class="model">
+<h2>Model 1: Full Criss-Cross</h2>
+<p><span class="tag tag-red">Max 4 Regions</span> <span class="tag tag-orange">High Complexity</span> <span class="tag tag-green">Fastest Failover</span></p>
+<p>Every DX location has Transit VIFs into ALL DXGWs, and every DXGW has Transit VIFs into ALL CNEs. Maximum path diversity — no dependency on on-prem WAN for failover.</p>
+
+<div class="diagram">
+                         Cloud WAN Core Network
+    ┌──────────────────────────────────────────────────────┐
+    │  ┌──────────┐      ┌──────────┐      ┌───────────┐  │
+    │  │us-west-1 │◄────►│us-east-1 │◄────►│eu-central │  │
+    │  │CNE 65435 │      │CNE 65434 │      │CNE 65436  │  │
+    │  └─┬──┬──┬──┘      └─┬──┬──┬──┘      └─┬──┬──┬───┘  │
+    └────┼──┼──┼────────────┼──┼──┼────────────┼──┼──┼─────┘
+         │  │  │            │  │  │            │  │  │
+         │  │  └──────┐     │  │  │     ┌──────┘  │  │
+         │  │         │     │  │  │     │         │  │
+    ┌────▼──▼──┐ ┌────▼─────▼──▼──▼─────▼────┐ ┌──▼──▼────┐
+    │  DXGW    │ │       DXGW Central        │ │  DXGW    │
+    │  West    │ │  (VIFs from ALL locations) │ │  East    │
+    └──┬────┬──┘ └──┬──────┬──────┬──────┬───┘ └──┬────┬──┘
+       │    │       │      │      │      │         │    │
+    ┌──▼─┐┌─▼──┐ ┌──▼──┐┌──▼──┐┌──▼──┐┌──▼──┐ ┌───▼┐┌──▼──┐
+    │SJC ││Dnvr│ │SJC  ││Dnvr ││Chi  ││Dal  │ │ATL ││Ash  │
+    │ DX ││ DX │ │ DX  ││ DX  ││ DX  ││ DX  │ │ DX ││ DX  │
+    └──┬─┘└──┬─┘ └──┬──┘└──┬──┘└──┬──┘└──┬──┘ └──┬─┘└──┬──┘
+       └──┬──┘       └──┬──┘       └──┬──┘        └──┬──┘
+       West Edge     West+Central   Central Edge   East Edge
+          │               │              │             │
+    ┌─────▼───────────────▼──────────────▼─────────────▼─────┐
+    │            On-Premises WAN Backbone (MPLS/SD-WAN)      │
+    │  ┌─────┐ ┌──────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐    │
+    │  │ SJC │ │Denver│ │ Chi │ │ Dal │ │ ATL │ │ Ash │    │
+    │  │ DC  │ │  DC  │ │ DC  │ │ DC  │ │ DC  │ │ DC  │    │
+    │  └─────┘ └──────┘ └─────┘ └─────┘ └─────┘ └─────┘    │
+    └────────────────────────────────────────────────────────┘</div>
+
+<h3>Failover Tiers</h3>
+<table class="failover-table">
+<tr><th>Tier</th><th>Trigger</th><th>Path</th><th>Latency</th></tr>
+<tr><td>1</td><td>SJC DX circuit fails</td><td>DXGW-West → Denver DX (same DXGW, auto BGP)</td><td>No change</td></tr>
+<tr><td>2</td><td>All West DX fails</td><td>us-west-1 CNE → DXGW-Central VIF (pre-exists at CNE) → Chi/Dal</td><td><strong>No backbone hop</strong></td></tr>
+<tr><td>3</td><td>West + Central fail</td><td>us-west-1 CNE → DXGW-East VIF (pre-exists at CNE) → ATL/Ash</td><td><strong>No backbone hop</strong></td></tr>
+</table>
+
+<h3>Traffic Engineering</h3>
+<ul>
+<li><strong>Intra-region:</strong> On-prem BGP AS-path prepend (SJC preferred over Denver)</li>
+<li><strong>Inter-region:</strong> Cloud WAN routing policy on DXGW attachments</li>
+</ul>
+
+<table>
+<tr><th>Metric</th><th>Value</th></tr>
+<tr><td>DXGWs</td><td>3</td></tr>
+<tr><td>VIFs per DX circuit</td><td><strong>3</strong></td></tr>
+<tr><td>Max regions</td><td class="con">4 (VIF limit)</td></tr>
+<tr><td>Cloud WAN attachments</td><td>3-9</td></tr>
+<tr><td>On-prem WAN dependency</td><td class="pro">No</td></tr>
+<tr><td>Complexity</td><td class="con">High</td></tr>
+<tr><td>Cost</td><td class="con">Highest</td></tr>
+</table>
+
+<p><span class="pro">✅ Pros:</span> Fastest failover (no backbone hop for Tier 2/3), no on-prem WAN dependency, maximum redundancy</p>
+<p><span class="con">❌ Cons:</span> Breaks at 5 regions (4 VIF limit), most complex (18+ VIFs), most expensive</p>
+</div>
+
+<!-- MODEL 2 -->
+<div class="model">
+<h2>Model 2: Regional DXGW with Dual DX</h2>
+<p><span class="tag tag-green">Unlimited Regions</span> <span class="tag tag-green">Low Complexity</span> <span class="tag tag-blue">Lowest Cost</span></p>
+<p>1 DXGW per region. Both DX circuits (primary + secondary) feed into the same DXGW via separate VIFs. DXGW handles primary/secondary failover internally via BGP. Cross-region failover via Cloud WAN backbone.</p>
+
+<div class="diagram">
+                         Cloud WAN Core Network
+    ┌──────────────────────────────────────────────────────┐
+    │  ┌──────────┐      ┌──────────┐      ┌───────────┐  │
+    │  │us-west-1 │◄─backbone──►│us-east-1 │◄─backbone──►│eu-central │  │
+    │  │CNE 65435 │      │CNE 65434 │      │CNE 65436  │  │
+    │  └────┬─────┘      └────┬─────┘      └─────┬─────┘  │
+    └───────┼─────────────────┼──────────────────┼─────────┘
+            │                 │                  │
+       ┌────▼────┐       ┌────▼────┐       ┌────▼─────┐
+       │  DXGW   │       │  DXGW   │       │  DXGW    │
+       │  West   │       │  East   │       │  Europe  │
+       └──┬───┬──┘       └──┬───┬──┘       └──┬───┬───┘
+          │   │              │   │              │   │
+     ━━━━━▼━  ╌╌▼╌╌╌    ━━━━▼━  ╌╌▼╌╌╌    ━━━━▼━  ╌╌▼╌╌╌
+     SJC DX  Denver DX  ATL DX  Ash DX   Chi DX  Dal DX
+     (pri)   (sec)      (pri)   (sec)    (pri)   (sec)
+       │       │           │      │         │       │
+    ┌──▼───────▼──┐    ┌───▼──────▼──┐   ┌──▼───────▼──┐
+    │ SJC   Denver│    │ ATL    Ash  │   │ Chi    Dal  │
+    │  DC     DC  │    │  DC     DC  │   │  DC     DC  │
+    └─────────────┘    └─────────────┘   └─────────────┘
+           │                  │                 │
+    ═══════╧══════════════════╧═════════════════╧════════
+              On-Premises WAN Backbone
+
+    ━━━━━ Primary (clean AS-path, on-prem BGP)
+    ╌╌╌╌╌ Secondary (prepended AS-path, on-prem BGP)</div>
+
+<h3>Failover Tiers</h3>
+<table class="failover-table">
+<tr><th>Tier</th><th>Trigger</th><th>Path</th><th>Latency</th></tr>
+<tr><td>1</td><td>SJC DX fails</td><td>DXGW-West auto-selects Denver DX (BGP within DXGW)</td><td>No change</td></tr>
+<tr><td>2</td><td>Both West DX fail</td><td>DXGW-West withdraws → Cloud WAN backbone → DXGW-East</td><td>+60-100ms</td></tr>
+<tr><td>3</td><td>On-prem last mile</td><td>ATL/Ash DX → on-prem WAN → SJC/Denver</td><td>+WAN latency</td></tr>
+</table>
+
+<h3>Traffic Engineering</h3>
+<ul>
+<li><strong>Intra-region:</strong> On-prem BGP AS-path prepend (primary clean, secondary prepended)</li>
+<li><strong>Inter-region:</strong> Cloud WAN routing policy on DXGW attachments for failover preference</li>
+<li><em>Cannot</em> apply different Cloud WAN policies to primary vs secondary (same DXGW attachment)</li>
+</ul>
+
+<table>
+<tr><th>Metric</th><th>Value</th></tr>
+<tr><td>DXGWs</td><td>3</td></tr>
+<tr><td>VIFs per DX circuit</td><td><strong>1</strong></td></tr>
+<tr><td>Max regions</td><td class="pro">Unlimited</td></tr>
+<tr><td>Cloud WAN attachments</td><td>3</td></tr>
+<tr><td>On-prem WAN dependency</td><td class="con">Yes (Tier 2)</td></tr>
+<tr><td>Complexity</td><td class="pro">Low</td></tr>
+<tr><td>Cost</td><td class="pro">Lowest</td></tr>
+</table>
+
+<p><span class="pro">✅ Pros:</span> Simplest, cheapest, scales infinitely, on-prem BGP handles primary/secondary automatically</p>
+<p><span class="con">❌ Cons:</span> Tier 2 depends on on-prem WAN, no per-circuit Cloud WAN visibility</p>
+</div>
+
+<!-- MODEL 3 -->
+<div class="model">
+<h2>Model 3: Per-Circuit DXGW with Cloud WAN Routing Policies</h2>
+<p><span class="tag tag-green">Unlimited Regions</span> <span class="tag tag-blue">Full Visibility</span> <span class="tag tag-green">Tested & Validated ✅</span></p>
+<p>1 DXGW per DX circuit (6 total). Each gets its own Cloud WAN attachment. Cloud WAN routing policies control primary/secondary AND inter-region failover preference. <strong>This is the model we tested and validated.</strong></p>
+
+<div class="diagram">
+                         Cloud WAN Core Network
+    ┌──────────────────────────────────────────────────────┐
+    │  ┌──────────┐      ┌──────────┐      ┌───────────┐  │
+    │  │us-west-1 │◄─backbone──►│us-east-1 │◄─backbone──►│eu-central │  │
+    │  │CNE 65435 │      │CNE 65434 │      │CNE 65436  │  │
+    │  └──┬───┬───┘      └──┬───┬───┘      └──┬───┬────┘  │
+    │     │   │              │   │              │   │      │
+    │  Routing Policy:    Routing Policy:    Routing Policy:│
+    │  prepend on sec     prepend on sec     prepend on sec│
+    └─────┼───┼──────────────┼───┼──────────────┼───┼──────┘
+          │   │              │   │              │   │
+     ┌────▼┐ ┌▼────┐   ┌────▼┐ ┌▼────┐   ┌────▼┐ ┌▼────┐
+     │DXGW │ │DXGW │   │DXGW │ │DXGW │   │DXGW │ │DXGW │
+     │W-Pri│ │W-Sec│   │E-Pri│ │E-Sec│   │EU-Pr│ │EU-Se│
+     └──┬──┘ └──┬──┘   └──┬──┘ └──┬──┘   └──┬──┘ └──┬──┘
+        │       │          │      │          │       │
+     ┌──▼──┐ ┌──▼──┐   ┌──▼──┐┌──▼──┐   ┌──▼──┐ ┌──▼──┐
+     │ SJC │ │Denv.│   │ ATL ││ Ash │   │ Chi │ │ Dal │
+     │ DX  │ │ DX  │   │ DX  ││ DX  │   │ DX  │ │ DX  │
+     └──┬──┘ └──┬──┘   └──┬──┘└──┬──┘   └──┬──┘ └──┬──┘
+        └───┬───┘          └──┬───┘         └───┬───┘
+     ┌──────▼──────┐   ┌─────▼──────┐   ┌──────▼──────┐
+     │ SJC  Denver │   │ ATL   Ash  │   │ Chi   Dal   │
+     │  DC    DC   │   │  DC    DC  │   │  DC    DC   │
+     └─────────────┘   └────────────┘   └─────────────┘
+            │                │                 │
+     ═══════╧════════════════╧═════════════════╧═════════
+               On-Premises WAN Backbone
+
+     Per-region ASNs: East=65001  West=65002  EU=65003
+     Cloud WAN: prepend-asn-list [65001,65001] on secondary attachments</div>
+
+<h3>Failover Tiers</h3>
+<table class="failover-table">
+<tr><th>Tier</th><th>Trigger</th><th>Path</th><th>Latency</th></tr>
+<tr><td>1</td><td>SJC DX fails</td><td>DXGW-W-Pri withdraws → Cloud WAN selects DXGW-W-Sec (longer AS-path)</td><td>No change</td></tr>
+<tr><td>2</td><td>Both West DX fail</td><td>Both withdraw → Cloud WAN backbone → DXGW-E-Pri</td><td>+60-100ms</td></tr>
+<tr><td>3</td><td>On-prem last mile</td><td>ATL DX → on-prem WAN → SJC/Denver</td><td>+WAN latency</td></tr>
+</table>
+
+<h3>Traffic Engineering</h3>
+<ul>
+<li><strong>Intra-region:</strong> Cloud WAN routing policy <code>prepend-asn-list</code> on secondary attachment inbound</li>
+<li><strong>Inter-region:</strong> Cloud WAN routing policy <code>set-local-preference</code> to prefer closer region on failover</li>
+<li><strong>On-prem:</strong> Can also prepend for belt-and-suspenders</li>
+<li><strong>Per-circuit visibility:</strong> Each DX circuit has its own Cloud WAN attachment — full route table visibility</li>
+</ul>
+
+<h3>Validated Test Results</h3>
+<table>
+<tr><th>Region</th><th>Baseline</th><th>Tier 1 (kill primary)</th><th>Tier 2 (kill both)</th><th>Restore</th></tr>
+<tr><td>us-west-1</td><td>✅ ~3ms local</td><td>✅ ~2.3ms secondary</td><td>✅ ~63ms via us-east-1</td><td>✅ ~3ms</td></tr>
+<tr><td>us-east-1</td><td>✅ ~3.6ms local</td><td>✅ ~3.3ms secondary</td><td>✅ ~63ms via us-west-1</td><td>✅ restored</td></tr>
+<tr><td>eu-central-1</td><td>✅ ~3.8ms local</td><td>✅ ~3.8ms secondary</td><td>✅ ~97ms via us-east-1</td><td>✅ restored</td></tr>
+</table>
+
+<table>
+<tr><th>Metric</th><th>Value</th></tr>
+<tr><td>DXGWs</td><td>6</td></tr>
+<tr><td>VIFs per DX circuit</td><td><strong>1</strong></td></tr>
+<tr><td>Max regions</td><td class="pro">Unlimited</td></tr>
+<tr><td>Cloud WAN attachments</td><td>6</td></tr>
+<tr><td>On-prem WAN dependency</td><td class="con">Yes (Tier 2)</td></tr>
+<tr><td>Complexity</td><td>Medium</td></tr>
+<tr><td>Cost</td><td>Medium</td></tr>
+</table>
+
+<p><span class="pro">✅ Pros:</span> Full per-circuit visibility, Cloud WAN routing policies for all TE, scales infinitely, tested and validated</p>
+<p><span class="con">❌ Cons:</span> 6 DXGWs to manage, Tier 2 depends on on-prem WAN</p>
+</div>
+
+<!-- MODEL 4 -->
+<div class="model">
+<h2>Model 4: Hybrid — Local DXGW + Global Backup DXGW</h2>
+<p><span class="tag tag-green">Unlimited Local</span> <span class="tag tag-blue">No On-Prem WAN Dependency</span> <span class="tag tag-orange">Medium Complexity</span></p>
+<p>3 local DXGWs (1 per region) handle normal traffic. 1 global DXGW receives a VIF from one DX circuit at each location, providing an AWS-backbone-only backup path. Eliminates on-prem WAN dependency for Tier 2 failover.</p>
+
+<div class="diagram">
+                         Cloud WAN Core Network
+    ┌──────────────────────────────────────────────────────┐
+    │  ┌──────────┐      ┌──────────┐      ┌───────────┐  │
+    │  │us-west-1 │◄─backbone──►│us-east-1 │◄─backbone──►│eu-central │  │
+    │  │CNE 65435 │      │CNE 65434 │      │CNE 65436  │  │
+    │  └──┬───┬───┘      └──┬───┬───┘      └──┬───┬────┘  │
+    └─────┼───┼──────────────┼───┼──────────────┼───┼──────┘
+          │   │              │   │              │   │
+     ┌────▼┐  │         ┌────▼┐  │         ┌────▼┐  │
+     │DXGW │  │         │DXGW │  │         │DXGW │  │
+     │West │  │         │East │  │         │EU   │  │
+     │(loc)│  │         │(loc)│  │         │(loc)│  │
+     └┬──┬─┘  │         └┬──┬─┘  │         └┬──┬─┘  │
+      │  │    │           │  │    │           │  │    │
+      │  │  ┌─▼───────────▼──▼────▼───────────▼──▼─┐  │
+      │  │  │         DXGW-Global                  │  │
+      │  │  │   (1 VIF from each DX location)      │  │
+      │  │  │   → 1 Cloud WAN attachment           │  │
+      │  │  │   (backup, AWS backbone only)        │  │
+      │  │  └┬────────────┬───────────────┬────────┘  │
+      │  │   │            │               │           │
+     ┌▼──▼───▼┐      ┌───▼───┐      ┌────▼───────────▼┐
+     │SJC Denv│      │ATL Ash│      │Chi  Dal         │
+     │DX   DX │      │DX  DX │      │DX   DX          │
+     └────────┘      └───────┘      └─────────────────┘
+         │               │                │
+     ┌───▼───────────────▼────────────────▼────────────┐
+     │         On-Premises WAN Backbone                │
+     │  SJC  Denver  Chi  Dal  ATL  Ash                │
+     └─────────────────────────────────────────────────┘
+
+     ━━━━━ Local DXGWs (preferred, 1 VIF per circuit)
+     ╌╌╌╌╌ Global DXGW (backup, 1 VIF per DX location)</div>
+
+<h3>Failover Tiers</h3>
+<table class="failover-table">
+<tr><th>Tier</th><th>Trigger</th><th>Path</th><th>Latency</th></tr>
+<tr><td>1</td><td>SJC DX fails</td><td>DXGW-West → Denver DX (same local DXGW)</td><td>No change</td></tr>
+<tr><td>2</td><td>Both West DX fail</td><td>DXGW-Global (has VIF from Chi or ATL) → AWS backbone → us-west-1</td><td>+60-100ms</td></tr>
+<tr><td>3</td><td>Multiple locations fail</td><td>DXGW-Global routes via any surviving DX location</td><td>+60-100ms</td></tr>
+</table>
+
+<table>
+<tr><th>Metric</th><th>Value</th></tr>
+<tr><td>DXGWs</td><td>4 (3 local + 1 global)</td></tr>
+<tr><td>VIFs per DX circuit</td><td><strong>1-2</strong></td></tr>
+<tr><td>Max regions</td><td class="pro">Unlimited (local), 3-4 (global DXGW VIF limit)</td></tr>
+<tr><td>Cloud WAN attachments</td><td>4</td></tr>
+<tr><td>On-prem WAN dependency</td><td class="pro">No</td></tr>
+<tr><td>Complexity</td><td>Medium</td></tr>
+<tr><td>Cost</td><td>Medium</td></tr>
+</table>
+
+<p><span class="pro">✅ Pros:</span> No on-prem WAN dependency for failover, local paths scale infinitely, best of both worlds</p>
+<p><span class="con">❌ Cons:</span> Global DXGW limited to 3-4 DX locations (VIF limit), slightly more complex than Model 2</p>
+</div>
+
+<!-- COMPARISON -->
+<div class="model">
+<h2>Side-by-Side Comparison</h2>
+<table class="comparison">
+<tr>
+<th>Criteria</th>
+<th>Model 1<br>Full Criss-Cross</th>
+<th>Model 2<br>Regional DXGW</th>
+<th>Model 3<br>Per-Circuit DXGW</th>
+<th>Model 4<br>Hybrid</th>
+</tr>
+<tr><td><strong>DXGWs</strong></td><td>3</td><td>3</td><td>6</td><td>4</td></tr>
+<tr><td><strong>VIFs per circuit</strong></td><td style="color:#c62828">3</td><td style="color:#2e7d32">1</td><td style="color:#2e7d32">1</td><td>1-2</td></tr>
+<tr><td><strong>Max regions</strong></td><td style="color:#c62828">4</td><td style="color:#2e7d32">∞</td><td style="color:#2e7d32">∞</td><td style="color:#2e7d32">∞ local</td></tr>
+<tr><td><strong>CWAN attachments</strong></td><td>3-9</td><td>3</td><td>6</td><td>4</td></tr>
+<tr><td><strong>Intra-region TE</strong></td><td>On-prem BGP</td><td>On-prem BGP</td><td>CWAN policy</td><td>On-prem BGP</td></tr>
+<tr><td><strong>Inter-region TE</strong></td><td>CWAN policy</td><td>CWAN policy</td><td>CWAN policy</td><td>CWAN policy</td></tr>
+<tr><td><strong>Tier 2 failover</strong></td><td style="color:#2e7d32">AWS backbone<br>(no extra hop)</td><td style="color:#c62828">On-prem WAN<br>(+backbone)</td><td style="color:#c62828">On-prem WAN<br>(+backbone)</td><td style="color:#2e7d32">AWS backbone</td></tr>
+<tr><td><strong>On-prem WAN needed</strong></td><td style="color:#2e7d32">No</td><td style="color:#c62828">Yes</td><td style="color:#c62828">Yes</td><td style="color:#2e7d32">No</td></tr>
+<tr><td><strong>Per-circuit visibility</strong></td><td>Partial</td><td style="color:#c62828">No</td><td style="color:#2e7d32">Yes</td><td>Partial</td></tr>
+<tr><td><strong>Complexity</strong></td><td style="color:#c62828">High</td><td style="color:#2e7d32">Low</td><td>Medium</td><td>Medium</td></tr>
+<tr><td><strong>Cost</strong></td><td style="color:#c62828">Highest</td><td style="color:#2e7d32">Lowest</td><td>Medium</td><td>Medium</td></tr>
+<tr><td><strong>Tested?</strong></td><td>No</td><td>No</td><td style="color:#2e7d32"><strong>Yes ✅</strong></td><td>No</td></tr>
+</table>
+</div>
+
+<!-- RECOMMENDATION -->
+<div class="recommend">
+<h2>Recommendation</h2>
+
+<h3>🏆 For Scale + Control: Model 3 (Per-Circuit DXGW)</h3>
+<p>Choose this if you need Cloud WAN-side visibility and deterministic traffic engineering per DX circuit. Scales infinitely. <strong>This is what we tested and proved works across all 3 regions with full failover validation.</strong></p>
+
+<h3>🥈 For Simplicity + Scale: Model 2 (Regional DXGW)</h3>
+<p>Choose this if you have reliable on-prem WAN between DCs and want the simplest possible design. Fewest moving parts. On-prem BGP handles everything within a region.</p>
+
+<h3>🥉 For No On-Prem WAN Dependency: Model 4 (Hybrid)</h3>
+<p>Choose this if your on-prem WAN is unreliable or doesn't exist between all DCs. The global DXGW ensures AWS backbone carries all failover traffic.</p>
+
+<h3>⚠️ Avoid for New Builds: Model 1 (Full Criss-Cross)</h3>
+<p>Only if you're certain you'll never exceed 4 regions. The 4 VIF-per-DX-connection limit is a hard wall that requires full redesign to overcome.</p>
+</div>
+
+</body>
+</html>
