@@ -224,9 +224,10 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <div class="te-box">
 <h3>Traffic Engineering</h3>
 <ul>
-<li><strong>Local PoP preference:</strong> On-prem BGP AS-path prepend — SJC clean, Denver prepended → DXGW-West prefers SJC</li>
-<li><strong>Local DXGW preference:</strong> Cloud WAN routing policy — prepend on cross-region DXGW VIFs so local DXGW is preferred</li>
-<li><strong>Inter-region failover order:</strong> Cloud WAN <code>associate-routing-policy</code> on CNE-to-CNE edge pairs — prepend on distant regions</li>
+<li><strong>Layer 1 — Local PoP preference (SJC vs Denver):</strong> On-prem BGP AS-path prepend — SJC clean, Denver prepended → DXGW-West prefers SJC</li>
+<li><strong>Layer 2 — Local DXGW preference:</strong> Cloud WAN routing policy — <code>prepend-asn-list</code> inbound on cross-region DXGW attachments at each CNE, so local DXGW is always preferred</li>
+<li><strong>Layer 3 — Inter-region failover order:</strong> Cloud WAN <code>associate-routing-policy</code> on CNE-to-CNE edge pairs — prepend on distant regions to control which cross-region DXGW is preferred when local DXGW fails</li>
+<li><strong>Note:</strong> Each DXGW has 3 Cloud WAN attachments (one per CNE) — routing policies can be applied per attachment for granular control</li>
 </ul>
 </div>
 
@@ -565,6 +566,16 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <tr><td>On-prem WAN dependency</td><td class="pro">No</td></tr>
 <tr><td>Complexity</td><td>Medium</td></tr>
 </table>
+
+<div class="te-box">
+<h3>Traffic Engineering</h3>
+<ul>
+<li><strong>Intra-DXGW (SJC vs Denver):</strong> On-prem BGP AS-path prepend on secondary PoP within each local DXGW</li>
+<li><strong>Local vs Global DXGW:</strong> Cloud WAN routing policy — <code>prepend-asn-list</code> inbound on Global DXGW attachment to make it less preferred than local DXGWs</li>
+<li><strong>Inter-region failover via Global DXGW:</strong> Global DXGW receives VIFs from multiple DX locations — Cloud WAN sees one attachment with multiple paths. On-prem BGP controls which DX location the Global DXGW prefers</li>
+<li><strong>Limitation:</strong> Global DXGW is a single Cloud WAN attachment — cannot apply per-location routing policies within it</li>
+</ul>
+</div>
 </div>
 
 <!-- COMPARISON -->
