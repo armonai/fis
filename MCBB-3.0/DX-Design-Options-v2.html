@@ -249,7 +249,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <h2>3. Model 2: Regional DXGW — Local VIF Only</h2>
 <div class="model">
 <p><span class="tag tag-green">Unlimited Regions</span> <span class="tag tag-green">Low Complexity</span> <span class="tag tag-blue">Lowest Cost</span></p>
-<p>1 DXGW per region. Each DX PoP pair feeds into its <strong>local DXGW only</strong> (1 VIF per circuit). Cross-region failover via Cloud WAN backbone. Inter-site WAN carries rerouted traffic between DX locations.</p>
+<p>1 DXGW per region. Each DC has its <strong>own independent DX circuit</strong>. Both DX circuits in a region create separate VIFs into the <strong>same regional DXGW</strong> (2 VIFs per DXGW). DXGW ECMPs across both. 1 Cloud WAN attachment per DXGW. Cross-region failover via Cloud WAN backbone.</p>
 <div class="svg-box">
 <svg viewBox="0 0 900 440" xmlns="http://www.w3.org/2000/svg">
   <!-- CNEs -->
@@ -315,7 +315,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
   <line x1="795" y1="240" x2="795" y2="270" stroke="#546e7a" stroke-width="1.5"/>
   <!-- Legend -->
   <line x1="50" y1="340" x2="90" y2="340" stroke="#ff6f00" stroke-width="2"/>
-  <text x="95" y="344" font-size="9">DX→local DXGW only (1 VIF per circuit)</text>
+  <text x="95" y="344" font-size="9">Each DC has own DX circuit → VIF into local DXGW (2 VIFs per DXGW)</text>
   <line x1="400" y1="340" x2="440" y2="340" stroke="#1565c0" stroke-width="3"/>
   <text x="445" y="344" font-size="9">DXGW→local CNE only (1 VIF per DXGW)</text>
   <line x1="50" y1="358" x2="90" y2="358" stroke="#3f51b5" stroke-width="1" stroke-dasharray="6,3"/>
