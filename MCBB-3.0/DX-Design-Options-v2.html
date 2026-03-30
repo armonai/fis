@@ -164,7 +164,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <div class="te-box">
 <h3>Traffic Engineering</h3>
 <ul>
-<li><strong>Layer 1 — Within DXGW (SJC/Denver pair):</strong> No preference — ECMP across both DX PoPs. Both are equal paths to on-prem WAN. DXGW load-balances. If one PoP fails, the other takes 100%. DC-level routing is on-prem WAN's job.</li>
+<li><strong>Layer 1 — Within DXGW (SJC/Denver pair):</strong> No preference — ECMP across both DX PoPs. Both are equal paths. DXGW load-balances. If one PoP fails, the other takes 100%. DC-level routing is handled on-premises.</li>
 <li><strong>Layer 2 — Local DXGW preference:</strong> Cloud WAN routing policy — <code>prepend-asn-list</code> inbound on cross-region DXGW attachments at each CNE, so local DXGW is always preferred</li>
 <li><strong>Layer 3 — Inter-region failover order:</strong> Cloud WAN <code>associate-routing-policy</code> on CNE-to-CNE edge pairs — prepend on distant regions to control which cross-region DXGW is preferred when local DXGW fails</li>
 <li><strong>Note:</strong> Each DXGW has 3 Cloud WAN attachments (one per CNE) — routing policies can be applied per attachment for granular control</li>
@@ -274,7 +274,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <div class="te-box">
 <h3>Traffic Engineering</h3>
 <ul>
-<li><strong>Intra-DXGW (SJC vs Denver):</strong> ECMP — no preference. Both PoPs are equal paths to on-prem WAN. DXGW load-balances across both VIFs.</li>
+<li><strong>Intra-DXGW (SJC vs Denver):</strong> ECMP — no preference. Both PoPs are equal. DXGW load-balances across both VIFs.</li>
 <li><strong>Inter-region failover order:</strong> Cloud WAN <code>associate-routing-policy</code> with <code>prepend-asn-list</code> on CNE-to-CNE edge pairs</li>
 <li><em>Cannot</em> apply different Cloud WAN policies per circuit (both behind same DXGW attachment)</li>
 </ul>
@@ -506,7 +506,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <div class="te-box">
 <h3>Traffic Engineering</h3>
 <ul>
-<li><strong>Intra-DXGW (SJC vs Denver):</strong> ECMP — no preference. Both PoPs are equal paths to on-prem WAN. If one PoP fails, the other takes 100%.</li>
+<li><strong>Intra-DXGW (SJC vs Denver):</strong> ECMP — no preference. Both PoPs are equal. If one PoP fails, the other takes 100%.</li>
 <li><strong>Local vs Global DXGW:</strong> Cloud WAN routing policy — <code>prepend-asn-list</code> inbound on Global DXGW attachment to make it less preferred than local DXGWs</li>
 <li><strong>Inter-region failover via Global DXGW:</strong> Global DXGW receives VIFs from multiple DX locations — Cloud WAN sees one attachment with multiple paths. On-prem BGP controls which DX location the Global DXGW prefers</li>
 <li><strong>Limitation:</strong> Global DXGW is a single Cloud WAN attachment — cannot apply per-location routing policies within it</li>
@@ -531,8 +531,8 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <tr><td style="text-align:left"><strong>CWAN attachments</strong></td><td>3-9</td><td>3</td><td>6</td><td>4</td></tr>
 <tr><td style="text-align:left"><strong>Intra-region TE</strong></td><td>On-prem BGP</td><td>On-prem BGP</td><td>On-prem BGP +<br>CWAN policy</td><td>On-prem BGP</td></tr>
 <tr><td style="text-align:left"><strong>Inter-region TE</strong></td><td>CWAN policy</td><td>CWAN policy</td><td>CWAN policy</td><td>CWAN policy</td></tr>
-<tr><td style="text-align:left"><strong>Tier 2 failover path</strong></td><td style="color:#2e7d32"><strong>AWS backbone<br>(no extra hop)</strong></td><td style="color:#c62828">on-prem WAN WAN<br>(+backbone)</td><td style="color:#c62828">on-prem WAN WAN<br>(+backbone)</td><td style="color:#2e7d32"><strong>AWS backbone</strong></td></tr>
-<tr><td style="text-align:left"><strong>on-prem WAN WAN needed?</strong></td><td style="color:#2e7d32"><strong>No</strong></td><td style="color:#c62828"><strong>Yes</strong></td><td style="color:#c62828"><strong>Yes</strong></td><td style="color:#2e7d32"><strong>No</strong></td></tr>
+<tr><td style="text-align:left"><strong>Tier 2 failover path</strong></td><td style="color:#2e7d32"><strong>AWS backbone<br>(no extra hop)</strong></td><td style="color:#c62828">on-prem WAN<br>(+backbone)</td><td style="color:#c62828">on-prem WAN<br>(+backbone)</td><td style="color:#2e7d32"><strong>AWS backbone</strong></td></tr>
+<tr><td style="text-align:left"><strong>on-prem WAN needed?</strong></td><td style="color:#2e7d32"><strong>No</strong></td><td style="color:#c62828"><strong>Yes</strong></td><td style="color:#c62828"><strong>Yes</strong></td><td style="color:#2e7d32"><strong>No</strong></td></tr>
 <tr><td style="text-align:left"><strong>Per-circuit visibility</strong></td><td>Partial</td><td style="color:#c62828">No</td><td style="color:#2e7d32"><strong>Yes</strong></td><td>Partial</td></tr>
 <tr><td style="text-align:left"><strong>Complexity</strong></td><td style="color:#c62828">High</td><td style="color:#2e7d32">Low</td><td>Medium</td><td>Medium</td></tr>
 <tr><td style="text-align:left"><strong>Cost</strong></td><td style="color:#c62828">Highest</td><td style="color:#2e7d32">Lowest</td><td>Medium</td><td>Medium</td></tr>
@@ -547,7 +547,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <h3>🏆 For Scale + Full Control: Model 3 (Per-Circuit DXGW)</h3>
 <p>Best for enterprise environments needing per-circuit traffic engineering from the Cloud WAN side. Scales infinitely. Full visibility. <strong>Tested and validated</strong> — all 3 regions, all failover tiers, deterministic inter-region routing confirmed.</p>
 <ul>
-<li>Per-region ASNs (65001/65002/65003) with Cloud WAN routing policies for per-PoP DXGW preference</li>
+<li>Cloud WAN routing policies for per-PoP DXGW preference within each region</li>
 <li>Cloud WAN routing policies for deterministic inter-region failover order</li>
 <li>Requires reliable on-prem WAN for Tier 2 failover last-mile</li>
 </ul>
@@ -565,7 +565,7 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <!-- TESTED RESULTS -->
 <div class="model">
 <h2>7. Validated Test Results (Model 3)</h2>
-<p>Tested in account 283811353571 using Site-to-Site VPN to simulate DX circuits. Per-region ASNs, on-prem AS-path prepend, Cloud WAN routing policies for deterministic failover.</p>
+<p>Tested using Site-to-Site VPN to simulate DX circuits. Cloud WAN routing policies validated for deterministic failover.</p>
 
 <table>
 <tr><th>Region</th><th>Baseline (local)</th><th>Tier 1 (kill one PoP)</th><th>Tier 2 (kill both)</th><th>Restore</th></tr>
