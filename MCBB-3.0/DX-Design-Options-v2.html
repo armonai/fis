@@ -362,9 +362,6 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
   <line x1="720" y1="228" x2="720" y2="255" stroke="#546e7a" stroke-width="1.5"/>
   <line x1="795" y1="228" x2="795" y2="255" stroke="#546e7a" stroke-width="1.5"/>
   <!-- ASN labels -->
-  <text x="115" y="175" text-anchor="middle" font-size="8" fill="#2e7d32">AS 65002</text>
-  <text x="425" y="175" text-anchor="middle" font-size="8" fill="#2e7d32">AS 65003</text>
-  <text x="755" y="175" text-anchor="middle" font-size="8" fill="#2e7d32">AS 65001</text>
   <!-- Legend -->
   <rect x="40" y="310" width="820" height="55" rx="4" fill="#f5f5f5" stroke="#ddd"/>
   <circle cx="65" cy="325" r="8" fill="#fff" stroke="#1565c0" stroke-width="2"/>
@@ -388,7 +385,6 @@ svg{max-width:100%;height:auto;display:block;margin:20px auto}
 <ul>
 <li><strong>Per-PoP DXGW preference:</strong> Cloud WAN routing policy — prepend-asn-list inbound on one DXGW to make the other preferred within same CNE</li>
 <li><strong>Inter-region failover order:</strong> Cloud WAN <code>associate-routing-policy</code> + <code>prepend-asn-list</code> on CNE-to-CNE pairs</li>
-<li><strong>Per-region ASNs:</strong> East=65001, West=65002, EU=65003 — enables independent TE per location</li>
 <li><strong>Per-circuit Cloud WAN visibility:</strong> Each DXGW has its own attachment — see BGP routes per circuit</li>
 </ul>
 <p><strong>Tested failover preference:</strong></p>
