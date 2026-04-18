@@ -1,0 +1,56 @@
+Week Ending: 4/10/2026
+
+Portfolio / Team: Cloud & Network Architecture | Etinosa Onaiwu
+
+Prepared By: Etinosa Onaiwu
+
+Executive summary:
+
+Megaport Direct connect Setup for MCBB 3.0 Lab 
+Cross-connect for the Megaport  dedicated Direct connect for MCBB 3.0 Lab has been completed, successfully provisioned 4 hosted  into the Lab account. Awaiting the VLAN extension into CML in order to access the routers and start Lab testing.
+ESS overview and deep dive session
+Engaged in technical discussion and deep dive to understand ESS environment to incorporate requirement in MCBB3.0 design
+Direct Connect Connectivity Design for MCBB 3.0 Cloud WAN -Refining design pattensContinued refining documentation outlining proposed Direct Connect connectivity design patterns for the MCBB 3.0 Cloud WAN deployment. Reducing design patterns to four models and updating design considerations. Here is the Link
+Wiz Platform Deep Dive (Ken Autry-Lead Cloud Security Engineer-Led Session)
+Completed a deep-dive session with the Ken Autry , covering platform capabilities and platform access.
+M&A architecture review and Internet Egress for MCBB3.0
+Reviewed M&A architecture to incorporate design requirement for MCBB3.0, Segment placement and MCBB CloudWAN integration with existing M&A infrastructure including internet egress traffic flow, incorporating into existing CloudWAN architecture link here.
+Versa Training with Anton 
+Engagement  with Anton discussing Versa SDWAN infrastructure setup, understanding how it is deployed and its functionality.
+Meeting with Scott around the different DX design pattern consideration and how traffic flow is envisaged prior to testing between the DC,s edge connects and AWS
+Access Provision to GIO Lab environment and CML access 
+Access  to GIO Lab and CML has been completed, providing Lab access to start working on MCBB3.0 Lab testing 
+Incident Management Training
+ Completed required training on incident  management
+Started documentation on the different test results as we continuously build link here
+
+Accomplishment
+Continued refining documentation outlining proposed Direct Connect connectivity design patterns for the MCBB 3.0 Cloud WAN deployment and CloudWAN segmentation.
+Completed a deep-dive session with the Ken Autry on Wiz Security Platform 
+Refined documentation for Secure Cloud DMZ to incorporate inspection design decision for ingress and egress traffic
+Cross-connect for the Megaport  dedicated Direct connect for MCBB 3.0 Lab has been completed, successfully provisioned 4 hosted  into the Lab account.
+Continue review of M&A architecture to incorporate design requirement for MCBB3.0, Segment placement and MCBB CloudWAN integration with existing M&A infrastructure.
+Completed Incident Management Training on Exchange
+Access  to GIO Lab and CML has been completed, providing Lab access to start working on MCBB3.0 Lab testing
+Support and coordinate the Versa Import Policy change for Finxact, scheduled for Sunday, April 6th.
+Lab test output documentation
+Work In Progress
+Continue refining Technical Documentation for the CloudWAN
+Continuing working on MCBB 3.0 Lab for design refinement incorporating DX routing requirement
+M&A architecture review and integration with proposed MCBB3.0
+Continue with GCP training Lab
+Setting up distributed ingress internet in Cloud
+Planned for  next week.
+Cloud Summit Alpharetta 
+Acceptance of DX connection into AWS lab account and DX Gateway creation and association of the Virtual interfaces into the DX gateways for lab test.
+Configure CML routers to bring up BGP between CML and AWS via GIO, dependent on VLAN creation on the CML controller and extension.
+
+
+
+5. Planned for Next Week
+
+• Resolve Palo Alto licensing blockers with Ivan if physical circuit is up and connectivity established into AWS
+• Access MCBB remote virtual routers once available — configure BGP and begin on-premise traffic engineering testing
+• Iterate on feedback out of the MCBB onsite planning section
+
+

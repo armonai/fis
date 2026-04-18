@@ -1,0 +1,68 @@
+✅ Weekly Team Roll‑Up
+
+Week Ending: 4/3/2026
+
+Portfolio / Team: Cloud & Network Architecture | Etinosa Onaiwu
+
+Prepared By: Etinosa Onaiwu
+
+
+1. Executive Summary
+
+• Worked with Ivan to deploy the Palo Alto firewall in the MCBB 3.0 AWS lab account in — deployment completed but licensing is currently blocked due to routing and connectivity issues.
+
+• Collaborated with Onye to created the first draft of the DX Connectivity Design Pattern document — outlines various design models with trade-offs; largely subject to validation once DX circuits are up and test routers are available.
+
+• Walked through the current MCBB 3.0 AWS lab build during the MCBB 3.0 planning meeting session — presented what has been built so far and gathered feedback, work still in progress.
+
+• Attended Forward Networks Deep Dive in cloud and Network Change Management and incident and operational support expectatios training on xchange.
+
+• Supporting Versa Import Policy change for Finxact — joining the scheduled change for 4/5.
+
+
+2. Key Accomplishments
+
+• Deployed Palo Alto firewall in the MCBB 3.0 lab account with Ivan. Pending Licensing once connectivity is achieved from cloud back to MCCB via Lab environment
+  Impact: Establishes the foundation for testing advanced firewall features and comparing with AWS native firewalls.
+
+• Created first draft of the DX Connectivity Design Pattern document — covers 4several design models (Full Criss-Cross, Regional DXGW, Per-Circuit DXGW, Hybrid) with failover tiers, traffic engineering options, cost and complexity
+  Impact: Provides a structured decision framework for other cloud team members to align on the DX integration approach.
+
+• Presented MCBB 3.0 AWS lab build progress during the MCBB 3.0 planning meeting session — walked through the current architecture, Cloud WAN segmentation, inspection VPC design, and traffic flow patterns.Work still in progress.
+  Impact: Aligns stakeholders on current lab state and validates design direction; gathers feedback to inform next phase of build-out
+
+• Completed Forward Networks training
+  Impact: Builds knowledge of network assurance and verification tooling relevant to validating the MCBB 3.0 network design
+
+• Completed Network Change Management training
+  Impact: Ensures compliance with Fiserv network change management processes ahead of production-impacting work.
+• Supporting Versa Import Policy change for Finxact — joining Sunday night change window
+  Impact: Ensures Finxact M&A connectivity progresses; supports prefix advertisement between Finxact and Fiserv Cloud
+
+
+3. Work In Progress
+
+• Palo Alto Licensing – Firewall deployed but licensing blocked due to routing and connectivity not yet in place towards MCBB. Will continue working with Ivan and to resolve Palo-Alto licensing once connectivity is in place.
+• DX Design Validation – First draft complete; design is subject to testing once DX circuits are provisioned and test routers are accessible
+• MCBB Remote Virtual Router – Awaiting availability from Scott to begin on-premise traffic engineering testing
+• IaC Development – Pending, alted for now since we still have lots of moving parts in the LAB build and design changes/patter.
+4. Risks / Blockers / Dependencies
+
+• Palo Alto licensing blocked — routing and connectivity issues preventing license activation in the AWS lab account
+  Mitigation / Next Step: Working with Scott next week if the Circuit is provisioned and Router also to start setting up BGP towards AWS. Once this is achieved next steps will be setup time with Ivan to continue with the licensing
+
+• MCBB remote virtual router availability — dependency on router readiness to begin testing on-premise traffic engineering scenarios
+  Mitigation / Next Step: Continuing to track with Scott; testing will begin immediately once access is granted and DX circuit provision.
+
+• DX circuit availability to integrate into AWS Cloud WAN — dependency on Megaport circuit provisioning
+  Mitigation / Next Step: DX design pattern draft created to support decision-making; integration work will be sequenced once circuits are available and design model is formally agreed upon with Anton and Scott
+
+
+
+5. Planned for Next Week
+
+• Resolve Palo Alto licensing blockers with Ivan if physical circuit is up and connectivity established into AWS
+• Access MCBB remote virtual routers once available — configure BGP and begin on-premise traffic engineering testing
+• Iterate on DX Connectivity Design Pattern with the other team memebers — gather feedback on the draft and align on preferred model
+• Support Versa Import Policy change for Finxact (Sunday night change window)
+

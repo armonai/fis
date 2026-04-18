@@ -1,0 +1,416 @@
+📋 MCBB 3.0 — Weekly Execution Plan (Updated)
+
+
+COMPLETED:
+  ✅ DR 1.1  VPC-to-VPC same region (Phase 2)
+  ✅ DR 1.2  VPC-to-VPC cross-region (Phase 3)
+  ✅ DR 2.1  Regional route propagation (Phase 2)
+  ✅ DR 2.2  Cross-regional route propagation (Phase 3)
+  ✅ DR 2.10 Multi-tenancy / VRF-like segment isolation (Phase 2)
+  ✅ DR 4.8  AWS NFW/NVA integration in Inspection VPC (Phase 5)
+  ✅ DR 4.9  Service chaining — send-to/send-via steering (Phase 5)
+
+IN-PROGRESS:
+  🔄 DR 3.1  Real-time flow telemetry — CloudWatch interim (Phase 7)
+  🔄 DR 3.3  Historical flow data — VPC Flow Logs to S3 (Phase 7)
+  🔄 DR 3.4  Metrics push/pull — CloudWatch alarms interim (Phase 7)
+  🔄 Security DMZ plan — Cloud DMZ Perimeter Design (Phase 5)
+
+NOT STARTED:
+  ❌ DR 1.3  VPC to on-prem geo affinity (Phase 4) — needs DX
+  ❌ DR 1.4  VPC to on-prem fallback (Phase 4) — needs DX
+  ❌ DR 1.6  Network security enforcement through Inspection VPC (Phase 5)
+  ❌ DR 1.9  ECMP support — multiple DX on same DXGW (Phase 4)
+  ❌ DR 1.12 Geopolitical routing avoidance (Phase 6) — needs IBB
+  ❌ DR 2.5  BGP community tagging on DX routes (Phase 4)
+  ❌ DR 2.7  Sub-second convergence / blackout (Phase 8) — needs DX
+  ❌ DR 2.9  End-to-end routing visibility via API/CLI (Phase 3)
+  ❌ DR 4.1  IaC provisioning via Terraform/CI/CD (Phase 1-8)
+
+══════════════════════════════════════════════════════════════════
+LAB PHASED RUNBOOK ALIGNMENT
+══════════════════════════════════════════════════════════════════
+
+Phase 1: C-WAN Core Network & Segments .............. ✅ DONE
+Phase 2: VPC Deployment & Intra-Region Routing ....... ✅ DONE
+Phase 3: Cross-Region C-WAN Routing .................. ✅ DONE (DR 2.9 still open)
+Phase 4: Split DXGW & Direct Connect Integration ..... ❌ BLOCKED (Megaport)
+Phase 5: Inspection VPC & Service Chaining ........... 🔄 PARTIAL (NFW done, PA in progress)
+Phase 6: IBB Architecture ............................ ❌ NOT STARTED (needs Phase 4)
+Phase 7: Observability & Telemetry ................... 🔄 IN-PROGRESS (interim only)
+Phase 8: End-to-End Validation & Stress Testing ...... ❌ NOT STARTED (needs all phases)
+
+══════════════════════════════════════════════════════════════════
+CURRENT BLOCKERS
+══════════════════════════════════════════════════════════════════
+
+🔴 BLK-001: Megaport circuit delivery — original ETA Mar 20, NOW OVERDUE
+   Impact: Blocks Phase 4 (DX), Phase 6 (IBB), Phase 8 (E2E validation)
+   Blocks: DR 1.3, 1.4, 1.9, 2.5, 2.7
+
+🔴 Palo Alto licensing — routing/connectivity issue in lab
+   Impact: Blocks firewall comparison (Phase 5 completion)
+
+🔴 GitLab correct group access — still pending
+   Impact: Blocks DR 4.1 (IaC provisioning)
+   IaC module layout defined: cwan-core/, cne/, vpc/, inspection-vpc/,
+   network-firewall/, dxgw/, dx-connection/, ibb-segment/
+
+🔴 MCBB remote virtual routers — awaiting Scott
+   Impact: Blocks on-prem BGP testing for Phase 4
+
+🟡 DX design model — first draft created, needs formal sign-off
+   Impact: Blocks DXGW creation and circuit requests
+
+══════════════════════════════════════════════════════════════════
+WEEK 4 (Apr 7-11) — Unblock Everything
+══════════════════════════════════════════════════════════════════
+Lab Phase: 4 (kickoff) + 5 (completion)
+Target DRs: Setup for DR 1.3, 1.4, 2.5 | Complete DR 1.6
+
+1. Resolve Palo Alto licensing with Ivan
+   - Fix routing/connectivity blocking license activation
+   - Once licensed: test L7 inspection, URL filtering, threat prevention
+   - Compare against AWS NFW → feeds Phase 5 completion
+   - Validates DR 1.6 (network security enforcement) with 3rd party NVA
+
+2. DX Design Model Decision — meeting with Anton & Scott
+   - Present DX-Design-Options.html (4 models)
+   - Recommend Model 3 (Per-Circuit DXGW) — tested & validated
+   - Address production design requirement: Split DXGW per region
+     (production doc states: "dedicated DXGW per region" to prevent
+     cross-geo routing — Model 3 aligns with this)
+   - Present BFD/convergence findings for DR 2.7 planning
+   - Discuss IBB approach options (Phase 6):
+     Option A: C-WAN IBB segment with route policies
+     Option B: Accelerated S2S VPN tunnels
+     Option C: Public VIF on existing DX
+   - GET SIGN-OFF → unblocks DX circuit requests
+
+3. Escalate Megaport circuit delivery (BLK-001 is overdue)
+   - Original ETA was March 20 — now 2+ weeks late
+   - Scott to track with Megaport on provisioning timeline
+   - This is the #1 blocker for the entire project
+
+4. Escalate GitLab correct group access
+   - IaC module layout already defined in lab doc
+   - Need access to push: cwan-core, cne, vpc, inspection-vpc,
+     network-firewall, dxgw, dx-connection, ibb-segment modules
+
+5. Support Versa Import Policy change for Finxact (Sunday night)
+
+DELIVERABLES:
+□ PA licensing resolved or clear path
+□ DX model formally signed off
+□ Megaport ETA confirmed
+□ GitLab access escalation
+
+══════════════════════════════════════════════════════════════════
+WEEK 5 (Apr 14-18) — Phase 5 Complete + IaC Start
+══════════════════════════════════════════════════════════════════
+Lab Phase: 5 (complete) + 4 (prep)
+Target DRs: DR 1.6, DR 4.1 (start)
+
+1. Complete Palo Alto vs AWS NFW comparison
+   - L7 inspection, URL filtering, threat prevention
+   - Document feature gaps and recommendation
+   - Feeds into production decision: AWS NFW vs 3rd party NVA
+   - Completes Phase 5 acceptance: "All E-W/N-S traffic through
+     Inspection VPC; firewall logs confirm; no bypass"
+
+2. Submit DX circuit requests via Megaport (Scott driving)
+   - Based on agreed model from Week 4
+   - Need: hosted DX connections to each DXGW
+   - Production uses 10-100GE; lab uses sub-1GE hosted (DD-004)
+
+3. Begin IaC development (DR 4.1)
+   - Start with vpc/ module: 14 VPCs, 84 subnets per SUBNET_ALLOCATION.md
+   - Follow Fiserv IaC patterns from existing GitLab modules
+   - State backend: S3 + DynamoDB (per lab doc, needs confirmation)
+   - Pipeline: .gitlab-ci.yml already scaffolded (validate → plan → apply → destroy)
+
+4. Complete DR 2.9 — End-to-end routing visibility
+   - API/CLI route table dump across all regions
+   - aws networkmanager get-network-routes for all CNEs
+   - Document route tables per segment per region
+   - Closes out remaining Phase 3 gap
+
+DELIVERABLES:
+□ Firewall comparison document
+□ DX circuits submitted
+□ IaC vpc/ module started
+□ DR 2.9 validated and documented
+
+══════════════════════════════════════════════════════════════════
+WEEK 6 (Apr 21-25) — Phase 4: DX Build
+══════════════════════════════════════════════════════════════════
+Lab Phase: 4 (build)
+Target DRs: DR 1.3 (start), DR 2.5 (start)
+
+1. Create DX Gateways
+   - Split DXGW per region (per production design requirement)
+   - If Model 3: 6 DXGWs with per-region ASNs (65434/65435/65436)
+   - Attach DXGWs to respective CNEs
+   - Production doc: "DXGW serves as route aggregator AND data plane
+     between C-WAN regions for on-prem traffic"
+
+2. Configure Transit VIFs (if Megaport circuits delivered)
+   - Attach VIFs to DXGWs
+   - Configure BGP sessions
+   - Enable BFD: 300ms interval, 300ms min-rx, multiplier 3
+   - Production requirement: encrypted Cloud OnRamp (DR 1.10)
+
+3. Configure BGP on MCBB remote virtual routers
+   - Advertise 10.0.0.0/8 summary to DXGWs
+   - Plan BGP community tagging per DR 2.5:
+     US origin, APAC origin, US-West origin, On-prem DC prefix
+   - Production doc: "All routes must be tagged with Fiserv-required
+     BGP communities"
+
+4. IaC: cwan-core/ and cne/ modules
+   - Core network policy, segments, CNEs
+   - 5 segments: Prod, Non-Prod, Shared Svc, Inspection, Hybrid
+   - Segment peering: Shared Svc ↔ Prod + Non-Prod
+
+DELIVERABLES:
+□ DXGWs created and associated
+□ Transit VIFs configured (if circuits available)
+□ BGP configured on remote routers
+□ IaC: cwan-core/ and cne/ modules
+
+══════════════════════════════════════════════════════════════════
+WEEK 7 (Apr 28 - May 2) — Phase 4: DX Validation
+══════════════════════════════════════════════════════════════════
+Lab Phase: 4 (validate)
+Target DRs: DR 1.3, DR 1.4, DR 1.9, DR 2.5
+
+1. Validate DR 1.3 — Geo affinity
+   - US VPC reaches on-prem via dxgw-us ONLY
+   - APAC VPC reaches on-prem via dxgw-apac ONLY
+   - Production doc: "route propagation limited to CNE-to-CNE and
+     to DXGW associated with local CNE"
+
+2. Test DR 1.4 — Fallback path
+   - Disable primary DX, verify alternate path
+   - Tier 1: kill primary circuit → secondary takes over
+   - Measure convergence time with continuous ping
+   - With BFD: expect ~30-65s
+
+3. Test DR 1.9 — ECMP support
+   - Multiple DX on same DXGW, verify load distribution
+   - Production doc: "traffic distributed across them using ECMP"
+
+4. Validate DR 2.5 — BGP community tagging
+   - Verify communities on DX-advertised routes
+   - Confirm Fiserv-required community values applied
+
+5. Test traffic engineering
+   - AS-path prepend, MED, local-preference on remote routers
+   - Cloud WAN routing policies: prepend-asn-list, set-local-preference
+
+6. IaC: inspection-vpc/ and network-firewall/ modules
+   - FW subnet RT, C-WAN attachment RT per architecture
+   - AWS NFW rule groups, stateful/stateless rules
+
+DELIVERABLES:
+□ DR 1.3 geo affinity validated
+□ DR 1.4 failover tested with convergence time
+□ DR 1.9 ECMP verified
+□ DR 2.5 BGP communities confirmed
+□ IaC: inspection-vpc/ and network-firewall/ modules
+
+══════════════════════════════════════════════════════════════════
+WEEK 8 (May 5-9) — Phase 4 Complete + Phase 6 Start
+══════════════════════════════════════════════════════════════════
+Lab Phase: 4 (complete) + 6 (start)
+Target DRs: DR 1.12, DR 2.7 (prep)
+
+1. Test DX failover — Tier 2 (both regional circuits down)
+   - Cloud WAN backbone failover
+   - Expected: +60-100ms latency per failover design doc
+   - Measure actual convergence time (~1-2 min with BFD)
+   - Completes Phase 4 acceptance: "On-prem reachable via correct
+     regional DXGW; no cross-geo DX leakage"
+
+2. Apply Cloud WAN routing policies for traffic engineering
+   - prepend-asn-list on secondary DXGW attachments
+   - set-local-preference for inter-region failover preference
+
+3. Begin Phase 6: IBB Architecture
+   - Based on decision from Week 4 meeting (Option A/B/C)
+   - Option A: Deploy IBB C-WAN segment with route policies
+   - Option B: Accelerated S2S VPN tunnels for encrypted overlay
+   - Option C: Public VIF on existing DX for IBB underlay
+   - Test DR 1.12: geopolitical routing avoidance
+     (APAC/EMEA traffic never routes via US DX)
+   - Production doc: "IBB is planned as SDWAN overlay connecting
+     Fiserv OnPrem sites over secure tunnels across CSP backbones"
+
+4. Document all DX results
+   - Update cloudwan-dx-failover-design.md with ACTUAL test results
+   - Update DX-Design-Options.html with chosen model justification
+   - Create failover test matrix: baseline, Tier 1, Tier 2, restore
+
+5. IaC: dxgw/ and dx-connection/ modules
+
+DELIVERABLES:
+□ Tier 2 failover tested and documented
+□ Phase 4 acceptance criteria met
+□ IBB approach tested (at least one option)
+□ DX documentation updated with actual results
+□ IaC: dxgw/ and dx-connection/ modules
+
+══════════════════════════════════════════════════════════════════
+WEEK 9 (May 12-16) — Phase 6 Complete + Phase 8 Start
+══════════════════════════════════════════════════════════════════
+Lab Phase: 6 (complete) + 8 (start)
+Target DRs: DR 1.12, DR 2.7, DR 2.8
+
+1. Complete IBB validation
+   - At least one IBB approach validated end-to-end with encryption
+   - Geopolitical constraints enforced (DR 1.12)
+   - Document recommendation with pros/cons matrix
+
+2. Begin Phase 8: End-to-End Validation
+   - Full traffic flow matrix: every region → every region,
+     every region → on-prem, all through Inspection VPCs
+   - DR 2.7: Blackout simulation — kill primary DX, measure convergence
+   - DR 2.8: Brownout simulation — inject latency/packet loss,
+     observe routing behavior
+   - Multi-tenancy validation: secondary segment isolation
+   - iperf bandwidth tests across C-WAN backbone and DX
+
+3. IaC: ibb-segment/ module + pipeline validation
+   - Run full pipeline: validate → plan → apply
+   - Test in dev account, validate drift-free deployment
+   - DR 4.1 acceptance: real-time provisioning via IaC
+
+DELIVERABLES:
+□ IBB approach validated with encryption
+□ DR 1.12 geopolitical routing confirmed
+□ Phase 8 blackout/brownout tests started
+□ IaC pipeline validated end-to-end
+
+══════════════════════════════════════════════════════════════════
+WEEK 10 (May 19-23) — Phase 8 Complete + Documentation
+══════════════════════════════════════════════════════════════════
+Lab Phase: 7 (finalize) + 8 (complete)
+Target DRs: All remaining
+
+1. Complete Phase 8 acceptance
+   - "All DRs validated or documented with gaps/workarounds"
+   - Compile final test results against DR matrix
+   - Document any gaps between lab (3 regions) and production (11 regions)
+   - Reference design decisions: DD-001 through DD-005
+
+2. Finalize Phase 7: Observability
+   - Document telemetry gaps and map to target state:
+     Interim: CloudWatch, VPC Flow Logs, Network Manager
+     Target: ThousandEyes, Splunk, Selector AI (DD-003)
+   - CloudWatch alarms for DX connection state changes
+   - AWS NFW logs (alert + flow) from Inspection VPCs
+
+3. Finalize architecture design document
+   - Move from draft to final
+   - Incorporate all test results, DX decision, firewall comparison
+   - Update MCCBB3_CloudWAN_Architecture.drawio.xml
+   - Reconcile region naming discrepancy
+
+4. IaC documentation
+   - README per module, variable descriptions
+   - Document module layout per lab doc specification
+
+DELIVERABLES:
+□ All DRs validated or gaps documented
+□ Final test results compiled against DR matrix
+□ Architecture design document finalized
+□ IaC documentation complete
+
+══════════════════════════════════════════════════════════════════
+WEEK 11 (May 26-30) — Stakeholder Alignment
+══════════════════════════════════════════════════════════════════
+
+1. Sync all docs to Confluence
+   - Lab POC: https://enterprise-confluence.onefiserv.net/spaces/FTSNE/pages/1079413677
+   - Update DR validation matrix with final status
+   - Upload all test evidence
+
+2. Present to stakeholders (Anton, Scott, Michael, broader team)
+   - Architecture walkthrough
+   - DR validation results (completed vs gaps)
+   - DX integration and failover results
+   - Firewall comparison (AWS NFW vs Palo Alto)
+   - IBB recommendation
+   - IaC readiness
+   - Production deployment considerations (3 regions → 11 regions)
+
+3. Capture feedback and next steps for production
+
+DELIVERABLES:
+□ Confluence fully updated
+□ Stakeholder presentation delivered
+□ Production deployment plan outlined
+
+══════════════════════════════════════════════════════════════════
+ONGOING (Parallel to all weeks)
+══════════════════════════════════════════════════════════════════
+
+- Monitor Finxact (Non-Prod) BGP stability + prefix advertisement (Scott)
+- Monitor CCV BGP peering state
+- Support ad-hoc M&A connectivity requests
+- Attend Versa training (Michael) — informs IBB decisions
+- Cloud Secure DMZ documentation (with Onyekachi)
+
+══════════════════════════════════════════════════════════════════
+CRITICAL PATH (DR-mapped)
+══════════════════════════════════════════════════════════════════
+
+Week 4: DX model sign-off ─→ Week 5: Circuit request ─→ Week 6: DX build
+         │                                                      │
+         │                                               Week 7: DR 1.3, 1.4,
+         │                                                       1.9, 2.5
+         │                                                      │
+         │                                               Week 8: Tier 2 + IBB
+         │                                                      │
+Week 4: GitLab access ──→ Week 5: IaC start ──→ Weeks 6-9: All modules
+         │                                                      │
+Week 4: PA licensing ──→ Week 5: FW comparison ──→ DR 1.6       │
+         │                                                      │
+Week 4: Router access ─→ Week 6: BGP config ──→ Week 7: TE     │
+                                                                │
+                                                         Week 9: Phase 8
+                                                         DR 2.7, 2.8
+                                                                │
+                                                         Week 10: Final docs
+                                                                │
+                                                         Week 11: Stakeholders
+
+══════════════════════════════════════════════════════════════════
+RISK REGISTER
+══════════════════════════════════════════════════════════════════
+
+| # | Risk | Impact | Status |
+|---|------|--------|--------|
+| 1 | Megaport circuits overdue (BLK-001, ETA was Mar 20) | Blocks Phase 4,6,8 — 7 DRs | CRITICAL — escalate Week 4 |
+| 2 | GitLab group access pending | Blocks DR 4.1, all IaC | HIGH — escalate Week 4 |
+| 3 | PA licensing blocked | Blocks Phase 5 completion | MEDIUM — working with Ivan |
+| 4 | Remote virtual routers unavailable | Blocks on-prem BGP tests | MEDIUM — Scott driving |
+| 5 | Cloud WAN convergence >90s without BFD | DR 2.7 requires sub-second | HIGH — BFD + measure actual |
+| 6 | IBB approach undecided | Blocks Phase 6, DR 1.12 | MEDIUM — discuss Week 4 |
+| 7 | Lab 3 regions vs production 11 regions | Scale gaps undocumented | LOW — document as DD-001 |
+| 8 | BGP community tagging plan TBP | DR 2.5 needs Fiserv values | MEDIUM — get from team |
+| 9 | Shared Svc VPC CIDR still TBD | Blocks full IaC for us-east-1 | LOW — assign from reserved block |
+
+══════════════════════════════════════════════════════════════════
+PRODUCTION DESIGN GAPS TO TRACK
+══════════════════════════════════════════════════════════════════
+
+From MCBB3.0 - AWS design doc (v.25):
+- Lab validates 3 of 11 production regions (DD-001)
+- Lab uses hosted DX sub-1GE vs production 10-100GE (DD-004)
+- NAT (DR 4.2/4.3) likely being withdrawn — confirm with team
+- QoS (DR 4.5) not supported by CSP at egress — documented gap
+- Inter-CSP connectivity (DR 1.5) out of lab scope
+- Encryption (DR 1.10/1.11) needs Cyber team decision
+- Target observability (ThousandEyes + Splunk + Selector AI) vs
+  interim CloudWatch — gap documented as DD-003/DD-005

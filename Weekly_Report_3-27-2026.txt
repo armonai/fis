@@ -1,0 +1,70 @@
+✅ Weekly Team Roll‑Up
+
+Week Ending: 3/27/2026
+
+Portfolio / Team: Cloud & Network Architecture | Etinosa Onaiwu
+
+Prepared By: Etinosa Onaiwu
+
+
+1. Executive Summary
+
+• Completed subnet migration for the MCBB 3.0 lab — received approved subnets, recreated VPCs, and migrated AWS Cloud WAN into the new subnets.
+
+• Tested majority of in-cloud traffic pattern scenarios and validated routing behavior across the updated lab environment.
+
+• Met with Anton and Scott to discuss DX structure requirements, routing patterns, and Cloud WAN integration scenarios.
+
+• Supported M&A cloud connectivity efforts for Finxact (Non-Prod) and CCV — ensured BGP peering state is UP between respective accounts and Fiserv Cloud.
+
+• Attended Versa training organized by Michael; used the session to deepen understanding of features Fiserv leverages today.
+
+
+2. Key Accomplishments
+
+• Received approved lab subnets, recreated VPCs, and migrated AWS Cloud WAN into the new subnet space
+  Impact: Eliminates IP overlap risk and aligns the lab environment with production-ready addressing; unblocks further build-out and testing
+
+• Tested majority of in-cloud traffic pattern scenarios across the updated lab environment
+  Impact: Validates Cloud WAN routing and segmentation behavior under the new subnet layout; builds confidence in the design ahead of IaC codification once I get good hold of the Fiserv Iac Flow.
+
+• Met with Anton and Scott on DX structure, routing patterns, and Cloud WAN integration scenarios and clarity on the CloudWAN design requirement
+  Impact: Advances requirement gathering for hybrid connectivity and traffic engineering; aligns team on expected routing behavior for on-premise integration
+
+• Assisted with Finxact M&A (Non-Prod) cloud connectivity — confirmed BGP state is UP between Finxact and Fiserv Cloud. Pending prefix advertisement between cloud and On-premise. Scott helping to driving this
+  Impact: Ensures Finxact Non-Prod environment has stable network reachability into Fiserv Cloud, supporting M&A integration timelines.
+
+• Assisted with CCV M&A connectivity — brought BGP peering state UP between CCV account and Fiserv Cloud
+  Impact: Restores/establishes network reachability for CCV, supporting M&A cloud integration requirements
+
+• Attended Versa training organized by Michael
+  Impact: Gained some understanding of Versa features currently leveraged by Fiserv; informs future network architecture decisions on CloudWAN
+
+• Had session with Ivan on Palo Alto setup for the lab account — discussed objectives for testing features not natively supported by AWS Network Firewall; provided account ID and VPC ID for deployment and also Walked through what and how we have setup the AWS Network firewall during the meeting.
+  Impact: Prepares the groundwork for Palo Alto lab deployment next week; enables testing of advanced firewall capabilities beyond AWS native offerings
+
+
+3. Work In Progress
+
+• MCBB 3.0 Design Validation – Continuing to test AWS design requirements against the updated lab setup
+• Palo Alto Lab Deployment – Account ID and Inspection VPC ID provided; setup to begin next week with Ivan
+• MCBB Remote Virtual Router – Awaiting availability next week; great progress made by Scott to get that end moving
+• IaC Development – Pending access to the correct GitLab group to begin codifying the environment
+
+
+4. Risks / Blockers / Dependencies
+
+• MCBB remote virtual router availability — dependency on router readiness to begin testing on-premise traffic engineering scenarios
+  Mitigation / Next Step: Scott driving progress to make the remote routers available next week; testing will begin once access is granted
+
+• DX circuit availability to integrate into AWS Cloud WAN — dependency on hybrid test environment readiness
+  Mitigation / Next Step: Requirements discussed with Anton and Scott; integration work will be sequenced as circuit requests has been submitted in the Megaport Portal by Scott.
+
+
+5. Planned for Next Week
+
+• Begin Palo Alto setup in the lab account with Ivan — test advanced firewall features not natively supported by AWS Network Firewall
+• Access MCBB remote virtual routers once available — begin testing traffic engineering scenarios for on-premise routing based on Initial requirement gathering from the meeting with Anton
+• Continue design requirement validation for MCBB 3.0
+• Progress IaC development for the lab environment — pending correct GitLab group access and understanding of the Fiserv flow and getting the routing pattern over DX tested
+• Continue iterating with Anton and Scott on DX integration and routing pattern requirements

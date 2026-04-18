@@ -1,0 +1,623 @@
+--- Page 1 ---
+Page 1MCBB 3.0 AWS LAB-POC
+
+--- Page 2 ---
+Page 2
+Version Control
+Version Published Changed By Comment
+ (v. 22) CURRENT Mar 20, 2026 17:16
+ 
+Onaiwu, Etinosa 
+(Columbus)
+v. 21 Mar 20, 2026 13:53
+ 
+Onaiwu, Etinosa 
+(Columbus)
+Go to Page History
+
+--- Page 3 ---
+Page 3Document Status
+Date Stage Status
+14 Mar 2025  Draft/Review IN PROGRESS
+
+--- Page 4 ---
+Page 4Reviewers and Contributors/ placeholder
+Name Group Role
+Wynston, Michael (US - Florida)   PE Sponsor
+Kirichenko, Anton (Remote - AUS New South Wales)  PE Contributor
+Peters, Scott (Omaha)   PE Contributor
+Butau, Shaima (Berkeley Heights Remote)   PE Contributor
+Onaiwu, Etinosa (Columbus)   PE Contributor
+Uchendu, Onyekachi (Columbus)   PE  Contributor
+
+--- Page 5 ---
+Page 5Table of Contents
+1. AWS Cloud WAN Terminology & Concepts
+1.1 Core Components
+1.2 Policy Actions & Routing Constructs
+2. LAB Overview & Objectives
+2.1 Purpose
+2.2 Scope
+2.3 Out of Scope
+2.4 Key Design Change: Versa Removal
+2.5 Inspection VPC Architecture
+3. LAB Topology & Network Diagrams
+3.1 Lab Region Selection
+3.2 VPC Architecture Per Region
+3.3 High-Level Lab Topology
+3.4 Detailed Low-Level Diagrams
+4. Resource Inventory
+4.1 CNE Attachments
+4.2 VPC & Inspection Resources
+4.3 DXGW, Direct Connect & Megaport
+5. BGP Community Tagging & Route Propagation
+5.1 BGP Community Tagging Plan
+5.2 Route Propagation Rules
+6. Infrastructure as Code / Terraform
+7. Phased Deployment Runbook
+7.1 Phase 1: C-WAN Core Network & Segments
+7.2 Phase 2: VPC Deployment & Intra-Region Routing
+7.3 Phase 3: Cross-Region C-WAN Routing
+7.4 Phase 4: Split DXGW & Direct Connect Integration
+7.5 Phase 5: Inspection VPC & Service Chaining
+7.6 Phase 6: IBB Replacement Architecture (Post-Versa)
+7.7 Phase 7: Observability & Telemetry
+7.8 Phase 8: End-to-End Validation & Stress Testing
+8. Test Cases & Validation Matrix
+9. Known Issues & Design Decisions
+
+--- Page 6 ---
+Page 61. AWS Cloud WAN Terminology 
+& Concepts
+
+--- Page 7 ---
+Page 7Quick reference for key AWS Cloud WAN terms and policy constructs used throughout 
+this lab build.
+
+--- Page 8 ---
+Page 81.1 Core Components
+Term Definition
+Core 
+NetworkThe global C-WAN resource that spans all regions; contains the policy 
+document, segments, and attachments.
+Core 
+Network 
+Edge 
+(CNE)A regional presence of the core network. Each AWS region in your policy 
+gets a CNE that handles routing and forwarding for that region.
+Segment An isolated routing domain within C-WAN, similar to a VRF. Attachments 
+in the same segment can communicate; different segments cannot unless 
+explicitly peered.
+Segment 
+PeeringAllows route exchange between two segments within the same CNE. Used 
+to enable Shared Services to reach both Prod and Non-Prod.
+Attachme
+ntA connection between a resource (VPC, DXGW, S2S VPN, TGW, or Connect) 
+and the core network. Each attachment belongs to exactly one segment.
+Attachme
+nt PolicyRules that automatically map new attachments to segments based on tag 
+conditions. Evaluated in order; first match wins.
+Network 
+RouteA route entry in a segment’s route table at a specific CNE, showing 
+destination prefix, attachment, and route type (propagated or static).
+
+--- Page 9 ---
+Page 91.2 Policy Actions & Routing Constructs
+Term Definition
+Segme
+nt 
+ActionsPolicy rules that define how traffic is routed between segments and 
+attachments. Includes share-with, send-to, and send-via actions.
+Send 
+ToForwards traffic destined for a specific segment to an intermediary 
+attachment (e.g., Inspection VPC) before delivery. Used for single-hop 
+inspection.
+Send 
+ViaInserts a middlebox (e.g., firewall) into the traffic path between two 
+segments. Supports both single-hop and dual-hop inspection patterns.
+Single 
+HopTraffic passes through one intermediary attachment before reaching 
+destination. Example: Prod VPC  Inspection VPC  On-Prem via DXGW.
+Dual 
+HopTraffic passes through two intermediary attachments before reaching 
+destination. Example: Source VPC  Inspection (region A)  Inspection (region B) 
+ Dest VPC.
+Share 
+WithShares routes from one segment with another without full peering. Provides 
+one-directional or selective route sharing.
+When 
+(Condit
+ion)A condition block in the attachment policy that matches on resource tags (e.
+g., tag:Environment = Prod) to determine segment placement. 
+Edge 
+Overri
+deAllows per-region overrides of the global segment/attachment policy. Used 
+when a specific CNE needs different routing behavior.
+
+--- Page 10 ---
+Page 102. LAB Overview & Objectives
+
+--- Page 11 ---
+Page 112.1 Purpose
+The MCBB 3.0 AWS Lab environment serves as a pre-production validation platform to 
+prove out the Cloud WAN with Split DXGW architecture defined in the MCBB 3.0 
+production design document (v.25, Jan 2026). The lab mirrors the production topology at 
+a reduced scale, enabling the team to validate design requirements (DRs), test failure 
+scenarios, refine Terraform modules, and document operational runbooks before 
+production deployment.
+
+--- Page 12 ---
+Page 122.2 Scope
+AWS Cloud WAN (C-WAN) core network across three lab regions: us-east-1, ap-
+southeast-2, us-west-2
+C-WAN segmentation: Prod, Non-Prod, Shared Services (peered to Prod + Non-
+Prod), and IBB segments
+Cloud Network Edge (CNE) attachments per region
+Split DXGW architecture with regional DXGW instances
+Multiple VPC types per region: Prod, Non-Prod, Inspection, and Shared Services
+Inspection VPC for firewall deployment (AWS Network Firewall or third-party 
+appliance)
+Direct Connect integration via Megaport virtual cross-connects (VXCs)
+BGP route propagation validation with community tagging
+Cross-region traffic flow validation over C-WAN backbone
+International Backbone (IBB) overlay design
+Service chaining through inspection VPCs for east-west and north-south traffic
+Infrastructure as Code (Terraform Enterprise) with GitLab CI/CD runners
+Network observability: interim CloudWatch/VPC Flow Logs, target state 
+ThousandEyes + Splunk + Selector AI
+
+--- Page 13 ---
+Page 132.3 Out of Scope
+Full-scale 100GE Cloud OnRamp capacity testing
+LATAM region deployment (Argentina, Panama, Mexico)
+Inter-CSP connectivity (Azure, GCP integration points)
+QoS enforcement at egress (DR 4.5 — not supported by CSP)
+Versa SD-WAN / SDR overlay — removed from design due to operational issues
+
+--- Page 14 ---
+Page 142.4 Key Design Change: Versa Removal
+The original MCBB 3.0 design specified Versa SDRs for the International Backbone (IBB) 
+SD-WAN overlay. For AWS Cloud Inter/intra regional connectivity due to recent 
+operational issues with Versa, the overlay between regions connectivity will be re-
+architected using cloud-native CNE (CloudWAN Network Edge):
+AWS Cloud WAN native intra/cross-region routing 
+Public VIF over existing DX connections for IBB underlay (as referenced in 
+production design doc)
+
+--- Page 15 ---
+Page 152.5 Inspection VPC Architecture
+Each region includes a dedicated Inspection VPC for centralized security appliances 
+supporting east-west inspection (inter-VPC traffic routed through firewall before reaching 
+destination), north-south inspection (traffic to on-prem/internet inspected before leaving 
+the region), and service chaining via C-WAN routing policies (send-to / send-via actions).
+Firewall options under evaluation:
+AWS Network Firewall — cloud-native, integrates with VPC route tables
+Third-party appliance firewall (e.g., Palo Alto, CheckPoint, Fortinet) — deployed as 
+EC2-based NVAs
+3. LAB Topology & Network 
+Diagrams
+
+--- Page 16 ---
+Page 163.1 Lab Region Selection
+Lab 
+RegionAWS Region DXGW 
+ScopeVPCs Deployed
+US East us-east-1 (N. Virginia) dxgw-us Prod, Non-Prod, Inspection, Shared 
+Svc
+APAC ap-southeast-2 
+(Sydney)dxgw-apac Prod, Inspection
+US West us-west-2 (Oregon) dxgw-emea Prod, Non-Prod, Inspection
+
+--- Page 17 ---
+Page 173.2 VPC Architecture Per Region
+us-east-1 (N. Virginia)
+VPC Name CIDR FOR 
+INITIAL BUILDPurpose C-WAN Segment
+lab-prod-
+use110.20.0.0/21 Production workloads Prod
+lab-
+nonprod-
+use110.21.0.0/21 Non-production / dev / 
+stagingNon-Prod
+lab-
+inspection-
+use110.22.0.0/22 Firewall appliances (AWS 
+NFW or 3rd party NVA)Inspection attachment
+lab-shared-
+use1TBD Shared services (DNS, 
+logging, tooling)Shared Services (peers to 
+Prod + Non-Prod)
+ap-southeast-2 (Sydney)
+VPC Name CIDR Purpose C-WAN Segment
+lab-prod-apse2 10.30.0.0
+/21Production workloads Prod
+lab-inspection-
+apse210.32.0.0
+/22Firewall appliances (AWS NFW or 3rd 
+party NVA)Inspection 
+attachment
+us-west-2 (Oregon) (To be Used for MnA/Client integration 
+Simulation/DXes failover)
+VPC Name CIDR Purpose C-WAN Segment
+lab-prod-usw2 TBD Production workloads Prod
+lab-nonprod-
+usw2TBD Non-production / dev / staging Non-Prod
+
+--- Page 18 ---
+Page 18lab-inspection-
+usw2TBD Firewall appliances (AWS NFW or 3rd 
+party NVA)Inspection 
+attachment
+Note: us-west-2 VPC CIDRs must be from a different address range than us-east-1 (10.20.
+x.x) and Sydney (10.30.x.x) to avoid overlap.
+
+--- Page 19 ---
+Page 193.3 High-Level Lab Topology
+C-WAN Core Network with four segments: Prod, Non-Prod, Shared Services (peered 
+to Prod + Non-Prod)
+One CNE per region attached to the core network
+Multiple VPCs per region attached to appropriate C-WAN segments
+Inspection VPC per region with dedicated C-WAN attachment for service chaining
+Two regional DXGW instances: dxgw-us, dxgw-apac
+Megaport VXCs delivering hosted DX connections to each DXGW
+3.4 Low Level Lab Architecture Diagram
+A single comprehensive low-level diagram covering the full lab architecture: C-WAN core 
+network with all 8 segments (Prod, Non-Prod, Shared Services, Hybrid, Clients & MnA), 
+CNEs per region, VPC attachments with segment mapping, Inspection VPCs with firewall 
+placement and service chaining flow (send-to/send-via), split DXGW instances with DX
+/Megaport connections, route propagation paths (CNE-to-CNE and CNE-to-DXGW), cross-
+region traffic flows, and IBB routing for international traffic, which will transverse via the 
+CNE edges on AWS backbone.
+
+--- Page 20 ---
+Page 20
+
+
+--- Page 21 ---
+Page 214.1 CNE Attachments
+
+--- Page 22 ---
+Page 22Region CNE Name Attachment ID Status
+us-east-1 CNE-US-East [TBP] [TBP]
+ap-southeast-2 CNE-APAC-Sydney [TBP] [TBP]
+us-west-2 CNE-US-West [TBP] [TBP]
+
+--- Page 23 ---
+Page 234.2 VPC & Inspection Resources
+Region VPC Name CIDR Type Segment FW Type
+us-east-1 lab-prod-use1 10.20.0.0
+/21Prod Prod —
+us-east-1 lab-nonprod-use1 10.21.0.0
+/21Non-Prod Non-Prod —
+us-east-1 lab-inspection-
+use110.22.0.0
+/22Inspection Inspection [AWS NFW / 
+3P]
+us-east-1 lab-shared-use1 TBD Shared 
+SvcShared 
+Svc—
+ap-
+southeast-2lab-prod-apse2 10.30.0.0
+/21Prod Prod —
+ap-
+southeast-2lab-inspection-
+apse210.32.0.0
+/22Inspection Inspection [AWS NFW / 
+3P]
+us-west-2 lab-prod-euc1 TBD Prod Prod —
+us-west-2 lab-nonprod-euc1 TBD Non-Prod Non-Prod —
+us-west-2 lab-inspection-
+euc1TBD Inspection Inspection [AWS NFW / 
+3P]
+
+--- Page 24 ---
+Page 244.3 DXGW, Direct Connect & Megaport
+DXGW DXGW 
+IDASN Region DX 
+ConnMegaport Status
+dxgw-us [TBP] [TBP] us-east-1 [TBP] [TBP] Megaport ETA: 
+Mar 20
+dxgw-
+apac[TBP] [TBP] ap-
+southeast-2[TBP] [TBP] [TBP]
+5. BGP Community Tagging & 
+Route Propagation  (need to get 
+some clarity on the tagging plan )
+
+--- Page 25 ---
+Page 255.1 BGP Community Tagging Plan
+All routes must be tagged with Fiserv-required BGP communities per DR 2.5: below table 
+is just a placeholder
+Community Value Meaning Applied To
+[TBP] US origin prefix All us-east-1 VPC routes
+[TBP] APAC origin prefix All ap-southeast-2 VPC routes
+[TBP] US-West origin prefix All us-west-2 VPC routes
+[TBP] On-prem DC prefix Routes from DX connections
+
+--- Page 26 ---
+Page 265.2 Route Propagation Rules ?? ( More consensus between 
+the team required e.g, engineering)
+C-WAN Prod segment:  Prod VPC CIDRs propagate CNE-to-CNE within Prod segment 
+only (isolated from Non-Prod)
+C-WAN Non-Prod segment:  Non-Prod VPC CIDRs propagate within Non-Prod 
+segment only (isolated from Prod)
+C-WAN Shared Services segment:  Peers to both Prod and Non-Prod segments; 
+Shared Services VPC routes visible in both
+Inspection VPC attachment:  Receives return routes from Prod/Non-Prod VPCs; 
+sends default or specific routes to attract inspection traffic
+dxgw-us:  Receives aggregated US VPC routes from CNE-US-East; advertises to DX 
+peers
+dxgw-apac:  Receives Sydney VPC routes from CNE-APAC-Sydney; advertises to DX 
+peers
+dxgw-emea:  Receives Frankfurt VPC routes from CNE-USWEST-Oregon; advertises 
+to DX peers
+Cross-DXGW traffic:  Must traverse C-WAN backbone (not leak between DXGWs)
+6. Infrastructure as Code / 
+Terraform
+
+--- Page 27 ---
+Page 27All lab infrastructure is managed via Terraform Enterprise with GitLab CI/CD runners.
+Item Details
+GitLab Project-lab-repo [GitLab repo URL]
+State Backend [ ] S3, Dynamodb??
+Sample Module Layout:
+mcbb3-lab-terraform/modules/
+  cwan-core/           — C-WAN core network, segments, policies
+  cne/                 — Cloud Network Edge per region
+  vpc/                 — VPC, subnets, route tables
+  inspection-vpc/      — Inspection VPC with firewall subnets
+  network-firewall/    — AWS Network Firewall or NVA config
+  dxgw/                — Direct Connect Gateway per region
+  dx-connection/       — DX connections and VIFs
+  ibb-segment/         — IBB C-WAN segment and policies
+7. Phased Deployment Runbook
+
+--- Page 28 ---
+Page 28The lab buildout is structured in sequential phases with dependencies and acceptance 
+criteria mapped to Design Requirements (DRs).
+
+--- Page 29 ---
+Page 297.1 Phase 1: C-WAN Core Network & Segments
+Dependencies:  AWS account provisioned, Terraform Enterprise workspace configured, 
+GitLab runner operational
+DR 4.1, DR 2.10 DRs:  
+Deploy C-WAN core network with global policy document
+Create Prod, Non-Prod, Shared Services (peered to Prod + Non-Prod), and IBB 
+segments across all three regions
+Deploy CNEs: CNE-US-East, CNE-APAC-Sydney, CNE-USWEST-Oregon
+Validate segment health and CNE state via console/API
+Acceptance:  All CNEs Available; four segments visible in all regions; Terraform state clean.
+
+--- Page 30 ---
+Page 307.2 Phase 2: VPC Deployment & Intra-Region Routing
+Dependencies:  Phase 1 complete
+DR 1.1, DR 2.1, DR 2.10 DRs:  
+us-east-1: Deploy Prod (10.20.0.0/21), Non-Prod (10.21.0.0/21), Inspection (10.22.0.0
+/22), Shared Services (TBD)
+ap-southeast-2: Deploy Prod (10.30.0.0/21), Inspection (10.32.0.0/22)
+us-west-2: Deploy Prod (TBD), Non-Prod (TBD), Inspection (TBD)
+Attach Prod VPCs to Prod segment, Non-Prod VPCs to Non-Prod segment, Shared 
+Services to Shared Services segment
+Configure Shared Services segment peering to both Prod and Non-Prod segments
+Attach Inspection VPCs as separate C-WAN attachments
+Deploy EC2 test instances in each VPC for connectivity validation
+Validate segment isolation: Prod cannot reach Non-Prod directly
+Validate Shared Services reachable from both Prod and Non-Prod via peering
+Acceptance:  Routes in correct segments; Prod/Non-Prod isolated; Shared Services 
+peered to both; Inspection attachments visible.
+
+--- Page 31 ---
+Page 317.3 Phase 3: Cross-Region C-WAN Routing
+Dependencies:  Phase 2 complete
+DR 1.2, DR 2.2, DR 2.9 DRs:  
+Validate C-WAN propagates VPC routes between CNEs across all three regions
+Test cross-region connectivity: us-east-1  ap-southeast-2, us-east-1  us-west-2, ap-
+southeast-2  us-west-2
+Verify route tables via API/CLI (aws networkmanager get-network-routes)
+Measure cross-region latency baselines
+Confirm VPC routes do NOT leak to DXGW attachments
+Acceptance:  Full mesh ping across all three regions; route tables correct; no DXGW 
+leakage.
+
+--- Page 32 ---
+Page 327.4 Phase 4: Split DXGW & Direct Connect Integration
+Dependencies:  Phase 3 complete, Megaport circuit delivered (target: March 20)
+DR 1.3, DR 1.4, DR 2.3, DR 1.9, DR 1.10, DR 2.5 DRs:  
+Create three regional DXGWs: dxgw-us, dxgw-apac, dxgw-emea
+Attach DXGWs to their respective CNEs
+Provision Megaport VXCs as hosted DX connections
+Establish BGP peering over transit VIFs
+Validate geo-affinity and DXGW failover
+Confirm cross-DXGW isolation (DR 1.12)
+Test BGP community tagging on advertised routes (DR 2.5)
+Acceptance:  On-prem reachable via correct regional DXGW; no cross-geo DX leakage.
+
+--- Page 33 ---
+Page 337.5 Phase 5: Inspection VPC & Service Chaining
+Dependencies:  Phase 2 complete (can parallel Phases 3-4)
+DR 1.6, DR 4.8, DR 4.9 DRs:  
+Deploy firewall in each region’s Inspection VPC (start with AWS Network Firewall)
+Configure C-WAN send-to/send-via actions to steer east-west and north-south 
+traffic through Inspection VPC
+Validate firewall logs show inspected flows
+Test traffic blackhole when firewall removed (no bypass path)
+Optionally test third-party NVA (CheckPoint, Palo Alto) as alternative in one region
+Acceptance:  All east-west/north-south traffic through Inspection VPC; firewall logs 
+confirm; no bypass.
+
+--- Page 34 ---
+Page 347.6 Phase 6: IBB Architecture
+ Phase 4 complete Dependencies:
+ DR 1.5, DR 1.11, DR 1.12 DRs:
+Deploy IBB C-WAN segment with dedicated route policies
+Test candidate IBB approaches:
+ C-WAN IBB segment with route policies restricting international Option A:
+traffic to approved paths
+ Accelerated Site-to-Site VPN tunnels for encrypted cross-region IBB Option B:
+underlay
+ Public VIF on existing DX for IBB overlay Option C:
+Validate international traffic paths and geopolitical routing constraints
+Document recommendation with pros/cons matrix
+ At least one IBB approach validated end-to-end with encryption; geopolitical Acceptance:
+constraints enforced.
+
+--- Page 35 ---
+Page 357.7 Phase 7: Observability & Telemetry
+Dependencies:  Phase 3+ (can parallel Phases 4-6)
+DR 3.1, DR 3.3, DR 3.4 DRs:  
+Target State (Cloud-Agnostic):
+ThousandEyes — Network path visualization, latency monitoring across all CSPs
+Splunk — Centralized log aggregation for flow logs, firewall logs, C-WAN events
+Selector AI — AIOps anomaly detection and automated root cause analysis
+Interim Lab (AWS Native):
+CloudWatch metrics for C-WAN (bytes in/out, packet counts per attachment)
+VPC Flow Logs for all lab VPCs (S3 + CloudWatch Logs)
+Network Manager route analytics and topology visualization
+CloudWatch alarms for DX connection state changes
+AWS Network Firewall logs (alert + flow) from Inspection VPCs
+Document telemetry gaps and map to target state tool capabilities
+Acceptance:  Interim dashboards operational; gaps documented with target state 
+mapping.
+
+--- Page 36 ---
+Page 367.8 Phase 8: End-to-End Validation & Stress Testing
+Dependencies:  All previous phases complete
+DR 2.7, DR 2.8, DR 2.10 DRs:  
+Full traffic flow matrix: every region to every region, every region to on-prem, all 
+through Inspection VPCs
+Blackout simulation: kill primary DX, measure convergence
+Brownout simulation: inject latency/packet loss, observe routing behavior
+Multi-tenancy validation: secondary segment isolation
+iperf bandwidth tests across C-WAN backbone and DX connections
+Compile final test results against DR matrix
+Acceptance:  All DRs validated or documented with gaps/workarounds; final report 
+compiled.
+8. Test Cases & Validation Matrix
+
+--- Page 37 ---
+Page 37Update Status as testing progresses. In Confluence, replace status text with mac  /status  
+ro for colored lozenges.
+
+--- Page 38 ---
+Page 38Transport
+DR Description Lab Test Phase Status
+1.1 VPC-to-VPC same 
+regionPing Prod to Non-Prod in us-east-
+12 COMPLETED
+1.2 VPC-to-VPC cross-
+regionPing us-east-1 Prod to Sydney 
+Prod3 COMPLETED
+1.3 VPC to on-prem (geo 
+affinity)US VPC reaches on-prem via 
+dxgw-us only4 NOT 
+STARTED
+1.4 VPC to on-prem 
+(fallback)Disable primary DX, verify 
+alternate path4 NOT 
+STARTED
+1.6 Network security 
+enforcementTraffic through Inspection VPC 
+firewall5 NOT 
+STARTED
+1.9 ECMP support Multiple DX on same DXGW, 
+verify load dist4 NOT 
+STARTED
+1.12 Geopolitical routing 
+avoidanceVerify APAC/EMEA traffic never 
+routes via US DX6 NOT 
+STARTED
+
+--- Page 39 ---
+Page 39Routing
+DR Description Lab Test Phase Status
+2.1 Regional route 
+propagationVPC routes visible in regional 
+CNE2 COMPLETED
+2.2 Cross-regional route 
+propagationVPC routes visible in remote 
+CNEs3 COMPLETED
+2.5 BGP community 
+taggingVerify communities on DX-
+advertised routes4 NOT 
+STARTED
+2.7 Sub-second 
+convergence (blackout)Kill DX link, measure 
+convergence8 NOT 
+STARTED
+2.9 End-to-end routing 
+visibilityAPI/CLI route table dump all 
+regions3 NOT 
+STARTED
+2.10 Multi-tenancy (VRF-like) Prod/Non-Prod segment 
+isolation; no route leakage2 COMPLETED
+
+--- Page 40 ---
+Page 40Observability
+DR Description Lab Test Phase Status
+3.1 Real-time flow 
+telemetryCloudWatch C-WAN metrics 
+(interim); ThousandEyes (target)7 IN-PROGRESS
+3.3 Historical flow data VPC Flow Logs to S3 (interim); 
+Splunk (target)7 IN-PROGRESS
+3.4 Metrics push/pull
+/subscriptionCloudWatch alarms (interim); 
+Selector AI (target)7 IN-PROGRESS
+
+--- Page 41 ---
+Page 41Security & Service Chaining
+DR Description Lab Test Phase Status
+4.8 AWS ANF/NVA 
+integrationRoute traffic through firewall in 
+Inspection VPC5 COMPLETED
+4.9 Service chaining C-WAN send-to/send-via steers 
+traffic to Inspection VPC5 COMPLETED
+Security DMZ plan 
+guiding Rules Cloud DMZ Perimeter Design 5 IN-PROGRESS
+9. Known Issues & Design 
+Decisions
+
+--- Page 42 ---
+Page 42Design Decisions & Lab Deviations
+ID Decision Rationale Type Impact
+D
+D-
+001Lab uses 3 regions 
+(production has 11)us-east-1, ap-southeast-2, us-
+west-2 cover all split DXGW 
+boundariesDevia
+tionLow
+D
+D-
+002NAT testing deferred (DR 4.2
+/4.3)Production likely withdrawing 
+NAT in favor of single GRTLow
+D
+D-
+003Cloud-agnostic observability 
+(ThousandEyes + Splunk + 
+Selector AI)Multi-cloud needs CSP-
+independent monitoring; 
+CloudWatch as interimDesig
+n 
+ChoiceLow
+D
+D-
+004Lab uses hosted DX (sub-
+1GE) vs production 10-100GEValidates routing, not capacity Devia
+tionLow
+D
+D-
+005CloudWatch interim for 
+observability vs production 
+TBDInterim covers DRs; target 
+validates multi-cloud readinessDevia
+tionLow
+
+--- Page 43 ---
+Page 43Blockers
+ID Blocker Impact ETA
+BLK-
+001Megaport circuit delivery 
+pendingBlocks Phase 4 (DX 
+integration)March 20, 
+2026

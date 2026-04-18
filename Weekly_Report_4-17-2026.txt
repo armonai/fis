@@ -1,0 +1,52 @@
+✅ Weekly Team Roll‑Up
+
+Week Ending: 4/17/2026
+
+Portfolio / Team: Cloud & Network Architecture | Etinosa Onaiwu
+
+Prepared By: Etinosa Onaiwu
+
+
+1. Executive Summary
+
+• Attended the MCBB 3.0 onsite planning session (2–3 days) — engaged with stakeholders to align on go-forward design decisions for MCBB 3.0. The session was critical in capturing insights from all key stakeholders to drive design alignment and inform the next phase of execution.
+
+• Attended a peer review session on 4/17 to gain understanding of the peer review process and expectations — building familiarity with how reviews are conducted.
+
+• Secured access into GCP sandbox environment — enabling hands-on exploration and initial familiarization with GCP as part of the broader MCBB 3.0 multi-cloud strategy.
+
+• Layer 3 point-to-point Direct Connect connectivity established — physical circuit is up and Layer 3 connectivity into AWS has been confirmed, unblocking downstream lab testing and Palo Alto licensing activities.
+
+
+2. Key Accomplishments
+
+• Attended MCBB 3.0 onsite planning session (2–3 days) — majority of the week was dedicated to this session, collaborating with stakeholders to align on design direction and go-forward decisions for MCBB 3.0.
+  Impact: Ensures all stakeholder perspectives are captured and incorporated into the MCBB 3.0 design, reducing risk of misalignment in later phases.
+
+• Attended peer review session on 4/17 — gained understanding of the peer review process and how it is conducted within the team.
+  Impact: Builds familiarity with team review standards and prepares for future participation in peer reviews.
+
+• Secured GCP sandbox access — initial access established to begin hands-on work in GCP environment.
+  Impact: Enables practical exploration of GCP capabilities relevant to MCBB 3.0 multi-cloud design considerations.
+
+• Layer 3 point-to-point Direct Connect connectivity established — physical circuit is up and Layer 3 connectivity into AWS confirmed.
+  Impact: Major milestone that unblocks Palo Alto licensing activation with Ivan and enables BGP configuration and on-premise traffic engineering testing via the MCBB remote virtual routers.
+
+
+3. Work In Progress
+
+• MCBB 3.0 design refinement — iterating based on feedback and alignment gathered during the onsite planning session.
+• AWS lab egress and ingress pattern build-out — ongoing work to build and validate traffic patterns in the AWS lab environment.
+
+
+4. Risks / Blockers / Dependencies
+
+• No blockers at this time.
+
+
+5. Planned for Next Week
+
+• Access MCBB remote virtual routers in CML — configure BGP and begin on-premise traffic engineering testing
+• Resolve Palo Alto licensing now that connectivity has been established into AWS.
+• Iterate on feedback out of the MCBB onsite planning session
+• Build out the egress and ingress pattern in the AWS lab — ongoing

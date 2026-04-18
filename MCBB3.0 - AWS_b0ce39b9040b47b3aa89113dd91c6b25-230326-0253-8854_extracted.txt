@@ -1,0 +1,368 @@
+--- Page 1 ---
+Page 1MCBB3.0 - AWS
+
+--- Page 2 ---
+Page 2TABLE OF CONTENT Quick 
+Links
+
+--- Page 3 ---
+Page 31 Version Control
+2 List of drawings
+3 List of tables
+4 Reviewers and Contributors
+5 KB Info
+5.1.1  Reading list
+5.2 Cloud WAN based design
+5.2.1  Overview
+5.2.2  Cloud WAN with Split DXGW DesignLink 
+DescriptionDescription
+
+--- Page 4 ---
+Page 4Version Control
+Version Published Changed By Comment
+ (v. 25) CURRENT Jan 06, 2026 17:15
+ 
+Peters, Scott (Omaha)
+v. 24 Nov 10, 2025 02:49
+ 
+Kirichenko, Anton (Remote - 
+AUS New South Wales)
+v. 23 Nov 10, 2025 02:47
+ 
+Kirichenko, Anton (Remote - 
+AUS New South Wales)
+Go to Page History
+
+--- Page 5 ---
+Page 5List of drawings
+Figure 1. MCBB3.0 High level diagram
+Figure 2. MCBB3.0 refined baseline design requirements
+Figure 2. High level MCBB/IBB design
+Figure 2. Baseline network diagram split DXGW
+Figure 3. Baseline network diagram split DXGW route propagation
+Figure 4. Baseline network diagram split DXGW US traffic flows
+Figure 4. Baseline network diagram split DXGW INT traffic flows
+
+--- Page 6 ---
+Page 6List of tables
+
+--- Page 7 ---
+Page 7Reviewers and Contributors
+Name Group Role
+Kirichenko, Anton (Remote - AUS New South Wales)  PE Contributor
+Shah, Amit (Berkeley Heights)   PE Contributor
+Peters, Scott (Omaha)   PE Contributor
+Cantor, Daniel (Columbus)   PE Contributor
+
+--- Page 8 ---
+Page 8KB Info
+MCBB 3.0 is Fiserv’s next-generation cloud networking product. Designed to work 
+seamlessly with the new Global Backbone, MCBB 3.0 is set to replace all existing cloud 
+networking solutions currently in use at Fiserv.
+The product is engineered to be scalable, easy to deploy and operate, and rich in 
+features. To formalize its capabilities, a baseline requirements list has been compiled 
+and made available for vendor review.
+While it’s understood that not every design requirement may be fully met, vendors are 
+strongly encouraged to propose alternative solutions to address any gaps. These 
+proposals may include leveraging third-party products owned or certified by Fiserv, as 
+well as utilizing internal Fiserv capabilities such as automation.
+The scope of the solution  as a minimum has to cover the following CSP regions:
+eu-west-1 (Ireland)
+eu-central-1 (Frankfurt)
+ap-southeast-1 (Singapore)
+ap-southeast-2 (Sydney)
+ap-south-1 (Mumbai)
+ap-south-2 (Hyderabad)
+us-west-2 (Oregon)
+us-east-1 (N. Virginia)
+us-east-2 (Ohio)
+me-central-1 (UAE)
+sa-east-1 (Sao Paulo)
+The geo regions not covered in the list, but desired to be in scope of the solution:
+Argentina
+Panama
+Mexico
+Fiserv owns multiple Cloud OnRamp circuits across various regions. The solution must 
+support short-path routing from each region to the nearest domestic on-premises WAN 
+or, if unavailable, to the closest regional on-ramp. The Cloud OnRamp WAN may consist 
+of dedicated circuits ranging from 10 to 100 Gbps, or hosted WAN capacity provisioned 
+through existing or new carriers. Traffic within AWS should be routed internally within 
+the cloud service provider (CSP).
+
+--- Page 9 ---
+Page 9All network traffic must be encrypted.  That requirement includes either CSP backbone or 
+Cloud OnRamp of any scale
+The solution must either provide, or clearly indicate the availability of, low-latency 
+s within the same region. connectivity options with other CSP
+The Fiserv Cloud network comprises multiple routing domains with overlapping address 
+spaces. The proposed MCBB3.0 solution must support 1:1 network address translation 
+to enable communication between overlapping segments.
+Route propagation should be granular down to specific prefixes, with configurable 
+options to allow, deny, or automatically aggregate routes to broader subnets where 
+applicable. All routes must be tagged with Fiserv-required BGP communities.  Routing 
+tables across the CSP network must be fully visible and accessible via API, CLI, or UI. All 
+routing policies must be explicitly controlled by Fiserv, and the CSP must not inject 
+unsolicited routes into the routing tables.
+The proposed solution must offer a consistent feature set across all regions. Any 
+limitations in features or scalability must be clearly defined and aligned with Fiserv-
+specific requirements.
+The solution must not include hidden components, such as inline load balancers, that 
+could potentially impact Fiserv traffic.It is highly desirable if the new solution offers a 
+level of bandwidth protections against applications with bulk consumption. 
+Network telemetry is expected to provide Fiserv with real-time visibility into traffic flows, 
+top talkers, fat flows, and related metrics. Additionally, network-related data should be 
+retrievable from the CSP infrastructure to support internal capacity planning and alerting.
+Figure 1. MCBB3.0 High level diagram
+
+--- Page 10 ---
+Page 10
+Figure 2. MCBB3.0 refined baseline design requirements
+DR 
+NDescription Comments
+Transport 
+DR
+1.1Connectivity between VPC/VNETs of 
+the same Cloud Service Provider (CSP) 
+within the region.
+DR
+1.2Connectivity between VPC/VNETs 
+across different regions of the same 
+CSP.
+DR
+1.3Connectivity between VPC/VNETs to 
+on-premises systems using the 
+nearest Fiserv Cloud entry point in the 
+same geographic region (geo affinity)
+
+--- Page 11 ---
+Page 11DR
+1.4Connectivity between VPC/VNETs to 
+on-premises systems using the closest 
+Fiserv Cloud entry point if the local 
+entry point is not available.
+DR
+1.5Connectivity between CSPs and other 
+CSPs using native cloud networking 
+and/or other solutions via private or 
+public network infrastructure.
+DR
+1.6Enforcement of network security 
+policies to control network access per 
+VPC/VNET region, compliant with 
+Fiserv Cyber and governance 
+requirements.
+DR
+1.7Cloud OnRamp scalability ranging 
+from sub-gig to 100g
+DR
+1.8Inter Cloud connectivity scalability 
+ranging from sub-gig to 100g
+DR
+1.9Support for multi-pathing (Equal-Cost 
+Multi-Path Routing, ECMP).
+DR
+1.10Network encryption support across 
+Cloud OnRamp of any scale aligns with 
+Fiserv Cyber requirements.Cyber decision on network encryption
+DR
+1.11Network encryption across CSP 
+boundaries (with evidence provided at 
+any time).Cyber decision on network encryption
+DR
+1.12Cross regional data forwarding with 
+the avoidance of specific geopolitical 
+boundariesself-imposed requirement
+Routing
+DR
+2.1Route propagation control at the 
+regional level.
+DR
+2.2Route propagation control at the cross-
+regional level.
+
+--- Page 12 ---
+Page 12DR
+2.3Route propagation control at the 
+Cloud OnRamp level.
+DR
+2.4Route propagation control for inter-
+cloud connectivity.
+DR
+2.5Granularity of routing controls per 
+prefix utilizing BGP communities.
+DR
+2.6Route table scalability supporting up 
+to Xk routes across all the elements of 
+the solutionX is defined by the default limits 
+imposed by each CSP
+DR
+2.7Sub-second convergence time in case 
+of blackout conditions.
+DR
+2.8Network convergence during 
+brownout conditions (e.g., when 
+packet latency exceeds the threshold 
+or sporadic packet drops occur).self-imposed requirement
+DR
+2.9Granular end-to-end visibility on 
+routing tables.
+DR
+2.10Multi-tenancy capabilities similar to 
+Virtual Routing and Forwarding (VRF).
+Observability
+DR
+3.1Real-time telemetry on active traffic 
+flows using standard tools/API calls.self-imposed requirement
+DR
+3.2Real-time reporting of SLA metrics 
+(latency/packet loss).self-imposed requirement to be 
+addressed through third-party 
+services like 1ke
+DR
+3.3Historical telemetry on network , flows
+including top talkers, top requestors, 
+and primary flows.
+DR
+3.4Performance metrics reporting 
+utilising push, pull, or subscription 
+mechanisms.
+Miscellaneous
+
+--- Page 13 ---
+Page 13DR
+4.1Real-time provisioning using 
+Infrastructure as Code (IAC) such as 
+Terraform, CI/CD, etc.
+DR
+4.2Granular Network Address Translation 
+(NAT) capabilities (1:1, N:1)self-imposed requirement to be 
+reviewed and likely withdrawn in 
+favour of supporting a single GRT with 
+following migration of existing subs
+/account
+DR
+4.3Granular Network Address Translation 
+(NAT) capabilities (1:1, N:1) between 
+tenants within the same CSPself-imposed requirement to be 
+reviewed and likely withdrawn in 
+favour of supporting a single GRT with 
+following migration of existing subs
+/account
+DR
+4.5Quality of Service (QoS) for 
+guaranteeing bandwidth capacity at 
+the Cloud OnRamp level.Not supported by CSP in egress ( C to 
+F)
+DR
+4.6Policy-based routing for specific 
+applications or flows.self-imposed requirement
+DR
+4.7Packet sniffing capabilities accessible 
+via UI/API.self-imposed requirement
+DR
+4.8Integration on the routing level with 
+NVAs such as non cloud native 
+firewalls, S2S gateways, SDWAN 
+appliances
+DR
+4.9Flexible service chaining capability to 
+divert traffic to the network security
+/etc appliances
+DR
+4.10Cloud OnRamp integrated to S-DMZ 
+design
+Reading list
+The reading list on C-WAN (from the Fiserv-AWS techical call):
+
+--- Page 14 ---
+Page 14CloudWAN and DX integration: https://aws.amazon.com/blogs/networking-and-
+content-delivery/simplify-global-hybrid-connectivity-with-aws-cloud-wan-and-aws-
+direct-connect-integration/
+CloudWAN availability in regions: https://docs.aws.amazon.com/network-manager
+/latest/cloudwan/what-is-cloudwan.html
+CloudWAN Quotas:  https://docs.aws.amazon.com/network-manager/latest
+/cloudwan/cloudwan-quotas.html#cloudwan-routing
+DirectConnect Quotas: https://docs.aws.amazon.com/directconnect/latest
+/UserGuide/limits.html
+CloudWAN CloudWatch Metrics : https://docs.aws.amazon.com/network-manager
+/latest/cloudwan/cloudwan-metrics.html
+Migration Guide : https://aws.amazon.com/blogs/networking-and-content-delivery
+/aws-cloud-wan-and-aws-transit-gateway-migration-and-interoperability-patterns
+ReInvent C-WAN slidedeck: https://reinvent.awsevents.com/content/dam/reinvent
+/2024/slides/net/NET311_Build-scalable-secure-global-connectivity-with-AWS.pdf
+Cloud WAN based design
+Overview
+AWS Cloud WAN is preferred solution to establish connectivity to/between/from Fiserv 
+sites and AWS regions. There is a number of use cases to be supported, explored, tested, 
+and documented in the MCBB 3.0 design.
+The following baseline assumptions must be accounted for:
+The US environment is large-scale, utilizing 10–100GE on either BB or Cloud 
+OnRamp.
+The US environment supports colocation with NaaS providers such as Megaport or 
+Equinix.
+The US Cloud OnRamp is preferably based on dedicated Direct Connect links.
+The US BB is a multisite network connecting data centers and edge locations.
+The US Cloud OnRamp is preferably deployed at edge locations.
+The international environment is small to medium scale, typically using sub-GE, 
+1GE, or 10GE.
+A standard international deployment consists of two data centers within the same 
+country, either in metro or national proximity.
+International environments generally do not have a BB; instead, they rely on DCI 
+links of sub-10GE or 10GE+.
+International sites are typically not colocated with AWS Edge sites in the same data 
+center facility.
+Third-party WAN/NaaS (if available) must be used for most international sites to 
+establish Direct Connect links with AWS.
+
+--- Page 15 ---
+Page 15Third-party WAN may be provided as L2 or L3 VPN by domestic telcos.
+In most cases, international Direct Connect links are hosted connections with sub-
+1GE capacity.
+Cloud WAN with Split DXGW Design
+The Cloud WAN (C-WAN) segment is extended across all AWS regions, with local VPCs 
+attached to Cloud Network Edges (CNEs). Each region includes a set of domestic Direct 
+Connect (DX) connections delivered to various DX edge sites.
+AWS supports affinity between DX locations and AWS regions, as detailed at https://aws.
+. By default, an AWS region learns on-premises amazon.com/directconnect/locations/
+routes from AWS DX through its associated regional DX location.
+Figure 2. High level MCBB/IBB design
+
+
+--- Page 16 ---
+Page 16If a regional DX location is unavailable or fails, AWS Direct Connect Gateway (DXGW) can 
+redirect traffic to other DX connections attached to the same DXGW. When multiple 
+alternative DX connections are available, traffic is distributed across them using Equal-
+Cost Multi-Path (ECMP) routing. This behavior necessitates a design decision to limit the 
+scope of DXGW to regional boundaries. Doing so prevents scenarios where AWS regions 
+might attempt to route traffic through DX connections located in different geopolitical 
+areas. AWS solution addressing these scenarios is to use dedciated DXGW per region
+Figure 2. Baseline network diagram split DXGW
+The C-WAN segment does not propagate local VPC routes to remote DXGW attachments. 
+Instead, route propagation is limited to CNE-to-CNE communication and to the DXGW 
+associated with the local CNE. Consequently, the DXGW serves both as a route 
+aggregator and as the data plane between different C-WAN regions when forwarding 
+traffic to on-premises locations. From a technical perspective, all routes ingested by CNEs 
+into the DXGW are advertised to every DX connection attached to that DXGW.
+Figure 3. Baseline network diagram split DXGW route propagation
+
+--- Page 17 ---
+Page 17
+All the traffic flows of VPCes connected to the same C-WAN segment will be able to 
+communicate to  each other using C-WAN dataplane acros AWS BB.
+Traffic of US regions will be also able to leverage DXGW to have optimal path towards the 
+closest Fiserv Cloud OnRamps locations with the fall back options to other DXes in US.
+Figure 4. Baseline network diagram split DXGW US traffic flows
+
+--- Page 18 ---
+Page 18
+ 
+Traffic crossing the international boundaries have to be processed by Fiserv International 
+Backbone (IBB) 
+IBB is planned as an SDWAN overlay connecting Fiserv OnPrem sites over the secure 
+tunnels established across CSP backbones. In case of AWS that techically means a 
+separate global DXGW or a Public VIF preferably established across the same Cloud 
+OnRamps used by MCBB
+Figure 4. Baseline network diagram split DXGW INT traffic flows
+
+--- Page 19 ---
+Page 19
