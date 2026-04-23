@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AWS Cloud WAN Multi-Region Test Plan</title>
+<style>
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #172B4D;
+    max-width: 1100px;
+    margin: 32px auto;
+    padding: 0 24px;
+    line-height: 1.5;
+  }
+  h1 {
+    color: #1F4E79;
+    font-size: 20pt;
+    margin-top: 28px;
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid #1F4E79;
+  }
+  h2 {
+    color: #1F4E79;
+    font-size: 14pt;
+    margin-top: 22px;
+    margin-bottom: 8px;
+  }
+  h1.title {
+    font-size: 26pt;
+    border-bottom: 3px solid #1F4E79;
+    padding-bottom: 8px;
+    margin-bottom: 24px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0 18px 0;
+    font-size: 10pt;
+  }
+  th {
+    background-color: #1F4E79;
+    color: #FFFFFF;
+    text-align: left;
+    padding: 8px 10px;
+    border: 1px solid #BFBFBF;
+    font-weight: bold;
+  }
+  td {
+    padding: 6px 10px;
+    border: 1px solid #BFBFBF;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background-color: #F2F2F2; }
+  blockquote.goal {
+    background-color: #FFF4E5;
+    border-left: 4px solid #ED7D31;
+    padding: 10px 14px;
+    margin: 12px 0;
+  }
+  blockquote.note {
+    background-color: #E7F3FE;
+    border-left: 4px solid #2E74B5;
+    padding: 10px 14px;
+    margin: 12px 0;
+  }
+  ul { margin: 8px 0 14px 0; padding-left: 28px; }
+  li { margin-bottom: 4px; }
+  code {
+    background-color: #F4F5F7;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-family: Consolas, monospace;
+    font-size: 10pt;
+  }
+  .toc { background: #F4F5F7; padding: 14px 18px; border-left: 3px solid #1F4E79; margin-bottom: 28px; }
+  .toc ul { list-style: none; padding-left: 0; }
+  .toc li { padding-left: 0; }
+  .toc li.sub { padding-left: 20px; font-size: 10pt; }
+  .toc a { color: #1F4E79; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<h1 class="title">AWS Cloud WAN Multi-Region Test Plan</h1>
+
+<div class="toc">
+<strong>Table of Contents</strong>
+<ul>
+  <li><a href="#s1">1. Executive Summary</a></li>
+  <li><a href="#s2">2. Scope</a></li>
+  <li class="sub"><a href="#s2-1">2.1 In Scope</a></li>
+  <li class="sub"><a href="#s2-2">2.2 Out of Scope</a></li>
+  <li><a href="#s3">3. Prerequisites</a></li>
+  <li class="sub"><a href="#s3-1">3.1 Test Probe Inventory</a></li>
+  <li><a href="#s4">4. Test Execution Conventions</a></li>
+  <li class="sub"><a href="#s4-1">4.1 Test Case ID Format</a></li>
+  <li class="sub"><a href="#s4-2">4.2 Result Codes</a></li>
+  <li class="sub"><a href="#s4-3">4.3 Evidence Required on Failure</a></li>
+  <li><a href="#s5">5. Pre-Test Baseline</a></li>
+  <li><a href="#s6">6. Intra-Segment Connectivity — Same Region</a></li>
+  <li class="sub"><a href="#s6-1">6.1 Test Matrix</a></li>
+  <li><a href="#s7">7. Intra-Segment Connectivity — Cross-Region</a></li>
+  <li class="sub"><a href="#s7-1">7.1 Region-Pair Matrix</a></li>
+  <li><a href="#s8">8. Inter-Segment Isolation (Default-Deny)</a></li>
+  <li class="sub"><a href="#s8-1">8.1 Test Matrix</a></li>
+  <li><a href="#s9">9. Inspection Path Enforcement</a></li>
+  <li class="sub"><a href="#s9-1">9.1 Permitted Flow Matrix</a></li>
+  <li class="sub"><a href="#s9-2">9.2 Anti-Test: Inspection Bypass</a></li>
+  <li><a href="#s10">10. Shared Services Reachability</a></li>
+  <li><a href="#s11">11. Hybrid Segment and On-Premises Flows</a></li>
+  <li class="sub"><a href="#s11-1">11.1 Data Plane — Per-DC Reachability via Both DMZs</a></li>
+  <li class="sub"><a href="#s11-2">11.2 Data Plane — Cross-DMZ Coverage</a></li>
+  <li class="sub"><a href="#s11-3">11.3 Control Plane (BGP)</a></li>
+  <li class="sub"><a href="#s11-4">11.4 Failover</a></li>
+  <li><a href="#s12">12. M&amp;A Acquisition Flows</a></li>
+  <li><a href="#s13">13. Internet Ingress and Egress Inspection</a></li>
+  <li class="sub"><a href="#s13-1">13.1 Egress Inspection</a></li>
+  <li class="sub"><a href="#s13-2">13.2 Ingress Inspection — Data Plane</a></li>
+  <li class="sub"><a href="#s13-3">13.3 Ingress Security Controls</a></li>
+  <li class="sub"><a href="#s13-4">13.4 Ingress Anti-Tests</a></li>
+  <li class="sub"><a href="#s13-5">13.5 Ingress Failover</a></li>
+  <li><a href="#s14">14. Resiliency and Failover</a></li>
+  <li><a href="#s15">15. BGP and Routing Validation</a></li>
+  <li><a href="#s16">16. Logging, Observability, and Alerting</a></li>
+  <li><a href="#s17">17. Policy and Change Safety</a></li>
+</ul>
+</div>
+
+<h1 id="s1">1. Executive Summary</h1>
+<p>This document defines the validation and acceptance test plan for the AWS Cloud WAN multi-region network environment. The test plan verifies segment isolation, inspection enforcement, hybrid connectivity, M&amp;A onboarding paths, and resiliency across three AWS Regions (us-east-1, us-east-2, us-west-2).</p>
+<p>Hybrid validation explicitly covers bidirectional reachability between AWS and the four on-premises data centers via two Secure DMZs, where redundant DX termination routers terminate the Direct Connect circuits before handing traffic to the internal DC fabric. The plan validates per-DMZ and per-DC path reachability, DMZ-level failover, and correct BGP behavior when either Secure DMZ or any DX circuit is withdrawn.</p>
+<p>Execution of this plan provides the evidence required to certify the environment for production workload onboarding. Expansion to additional Regions (e.g., ap-southeast-2) is out of scope for this cycle and will be covered by a follow-on addendum.</p>
+
+<h1 id="s2">2. Scope</h1>
+
+<h2 id="s2-1">2.1 In Scope</h2>
+<ul>
+<li>AWS Cloud WAN global network spanning us-east-1, us-east-2, and us-west-2</li>
+<li>Five segments: Prod, Non-Prod, Shared Services, Hybrid, Inspection</li>
+<li>Inter-segment, intra-segment, and cross-region connectivity validation</li>
+<li>On-premises connectivity via Direct Connect / DXGW landing in the Hybrid segment, terminating at redundant DX routers in two Secure DMZs</li>
+<li>Reachability validation to all four on-premises data centers via both Secure DMZs, including per-DMZ and per-DC failover</li>
+<li>M&amp;A acquisition network onboarding paths</li>
+<li>North-south inspection enforcement via regional Inspection VPCs (both egress and ingress directions)</li>
+<li>BGP, routing, failover, and observability validation</li>
+</ul>
+
+<h2 id="s2-2">2.2 Out of Scope</h2>
+<ul>
+<li>ap-southeast-2 (Sydney) Region — deferred to a follow-on addendum</li>
+<li>Application-layer functional testing</li>
+<li>Endpoint security, EDR, or host hardening validation</li>
+<li>On-premises LAN/WAN performance outside the Direct Connect demarcation</li>
+</ul>
+
+<h1 id="s3">3. Prerequisites</h1>
+<p>Before executing this plan, confirm the following:</p>
+<ul>
+<li>Core Network Policy deployed and at steady state across all Regions</li>
+<li>All segment VPCs attached to the Core Network Edge (CNE) in their respective Region</li>
+<li>Inspection VPCs deployed and stateful firewalls operational in each Region</li>
+<li>DXGW associations active and BGP sessions Established with on-premises PE routers</li>
+<li>Test probe EC2 instances deployed per Section 3.1 with iperf3, mtr, tcpdump, dig, and curl installed</li>
+<li>Logging enabled: VPC Flow Logs, firewall session logs, Network Manager events</li>
+<li>Change Approval secured for any test requiring route manipulation or policy changes</li>
+</ul>
+
+<h2 id="s3-1">3.1 Test Probe Inventory</h2>
+<table>
+<thead><tr><th>Probe Name</th><th>Segment</th><th>Region</th><th>VPC CIDR</th><th>Private IP</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>probe-prod-use1</td><td>Prod</td><td>us-east-1</td><td></td><td></td><td>Intra/cross-segment tests</td></tr>
+<tr><td>probe-prod-use2</td><td>Prod</td><td>us-east-2</td><td></td><td></td><td>Intra/cross-segment tests</td></tr>
+<tr><td>probe-prod-usw2</td><td>Prod</td><td>us-west-2</td><td></td><td></td><td>Intra/cross-segment tests</td></tr>
+<tr><td>probe-nonprod-use1</td><td>Non-Prod</td><td>us-east-1</td><td></td><td></td><td>Isolation &amp; inspection</td></tr>
+<tr><td>probe-nonprod-use2</td><td>Non-Prod</td><td>us-east-2</td><td></td><td></td><td>Isolation &amp; inspection</td></tr>
+<tr><td>probe-nonprod-usw2</td><td>Non-Prod</td><td>us-west-2</td><td></td><td></td><td>Isolation &amp; inspection</td></tr>
+<tr><td>probe-shared-use1</td><td>Shared Services</td><td>us-east-1</td><td></td><td></td><td>DNS, AD, monitoring</td></tr>
+<tr><td>probe-shared-use2</td><td>Shared Services</td><td>us-east-2</td><td></td><td></td><td>DNS, AD, monitoring</td></tr>
+<tr><td>probe-shared-usw2</td><td>Shared Services</td><td>us-west-2</td><td></td><td></td><td>DNS, AD, monitoring</td></tr>
+<tr><td>probe-hybrid-use1</td><td>Hybrid</td><td>us-east-1</td><td></td><td></td><td>On-prem transit</td></tr>
+<tr><td>probe-onprem-dc1</td><td>On-Prem DC1</td><td>N/A</td><td></td><td></td><td>DC1 origin (via Secure DMZ-A)</td></tr>
+<tr><td>probe-onprem-dc2</td><td>On-Prem DC2</td><td>N/A</td><td></td><td></td><td>DC2 origin (via Secure DMZ-A)</td></tr>
+<tr><td>probe-onprem-dc3</td><td>On-Prem DC3</td><td>N/A</td><td></td><td></td><td>DC3 origin (via Secure DMZ-B)</td></tr>
+<tr><td>probe-onprem-dc4</td><td>On-Prem DC4</td><td>N/A</td><td></td><td></td><td>DC4 origin (via Secure DMZ-B)</td></tr>
+<tr><td>probe-dmz-a</td><td>Secure DMZ-A</td><td>N/A</td><td></td><td></td><td>DX termination path validation</td></tr>
+<tr><td>probe-dmz-b</td><td>Secure DMZ-B</td><td>N/A</td><td></td><td></td><td>DX termination path validation</td></tr>
+</tbody>
+</table>
+
+<h1 id="s4">4. Test Execution Conventions</h1>
+
+<h2 id="s4-1">4.1 Test Case ID Format</h2>
+<p><code>TC-&lt;Section&gt;-&lt;Sequence&gt;</code>. Example: <code>TC-05-003</code> is test case 3 in Section 5.</p>
+
+<h2 id="s4-2">4.2 Result Codes</h2>
+<table>
+<thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>PASS</td><td>Observed behavior matches expected result</td></tr>
+<tr><td>FAIL</td><td>Observed behavior does not match expected result; defect raised</td></tr>
+<tr><td>BLOCKED</td><td>Test cannot run due to dependency (capture blocker in Notes)</td></tr>
+<tr><td>N/A</td><td>Test not applicable to this environment</td></tr>
+</tbody>
+</table>
+
+<h2 id="s4-3">4.3 Evidence Required on Failure</h2>
+<p>For every FAIL, capture and attach:</p>
+<ul>
+<li>Source and destination IPs, segment names, Region</li>
+<li>Core Network Policy version number</li>
+<li>Relevant segment route table exports</li>
+<li>Firewall session log excerpt</li>
+<li>tcpdump capture where applicable</li>
+<li>Output of AWS Network Manager Route Analyzer for the flow</li>
+</ul>
+
+<h1 id="s5">5. Pre-Test Baseline</h1>
+<blockquote class="goal"><strong>Goal:</strong> Capture a clean-state snapshot of the environment so post-test diffs are meaningful.</blockquote>
+<table>
+<thead><tr><th>Test ID</th><th>Check</th><th>Expected Result</th><th>Status</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>TC-05-001</td><td>Export current Core Network Policy JSON</td><td>File captured, version recorded</td><td></td><td></td></tr>
+<tr><td>TC-05-002</td><td>Enumerate CNE attachments per Region</td><td>All expected VPC, DXGW, Connect attachments present</td><td></td><td></td></tr>
+<tr><td>TC-05-003</td><td>Capture segment route tables (all segments, all Regions)</td><td>Stored in evidence folder</td><td></td><td></td></tr>
+<tr><td>TC-05-004</td><td>Capture Inspection VPC route tables and firewall rule set version</td><td>Exports stored</td><td></td><td></td></tr>
+<tr><td>TC-05-005</td><td>Document DXGW associations, BGP ASNs, advertised prefixes</td><td>Baseline matches approved design</td><td></td><td></td></tr>
+<tr><td>TC-05-006</td><td>Confirm VPC Flow Logs, firewall logs, Network Manager events streaming</td><td>All log destinations receiving events</td><td></td><td></td></tr>
+<tr><td>TC-05-007</td><td>Record baseline BGP neighbor states</td><td>All neighbors Established</td><td></td><td></td></tr>
+</tbody>
+</table>
+
+<h1 id="s6">6. Intra-Segment Connectivity — Same Region</h1>
+<blockquote class="goal"><strong>Goal:</strong> Prove two workloads in the same segment and Region communicate directly without transiting the Inspection VPC.</blockquote>
+
+<h2 id="s6-1">6.1 Test Matrix</h2>
+<table>
+<thead><tr><th>Test ID</th><th>Source</th><th>Destination</th><th>Protocol</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-06-001</td><td>probe-prod-use1</td><td>probe-prod-use1-B</td><td>ICMP</td><td>Reachable, direct path</td><td></td></tr>
+<tr><td>TC-06-002</td><td>probe-prod-use1</td><td>probe-prod-use1-B</td><td>TCP/443</td><td>Reachable both directions</td><td></td></tr>
+<tr><td>TC-06-003</td><td>probe-prod-use1</td><td>probe-prod-use1-B</td><td>TCP/22</td><td>Reachable both directions</td><td></td></tr>
+<tr><td>TC-06-004</td><td>probe-nonprod-use1</td><td>probe-nonprod-use1-B</td><td>ICMP + TCP</td><td>Reachable, direct path</td><td></td></tr>
+<tr><td>TC-06-005</td><td>probe-shared-use1</td><td>probe-shared-use1-B</td><td>ICMP + TCP</td><td>Reachable, direct path</td><td></td></tr>
+<tr><td>TC-06-006</td><td>All above</td><td>All above</td><td>mtr trace</td><td>Path does NOT transit Inspection VPC ENIs</td><td></td></tr>
+</tbody>
+</table>
+<blockquote class="note"><strong>Note:</strong> Intra-segment traffic should not be inspected by policy. If it is, a route is leaking into the Inspection segment.</blockquote>
+<p>Repeat the matrix for each Region: us-east-2 and us-west-2.</p>
+
+<h1 id="s7">7. Intra-Segment Connectivity — Cross-Region</h1>
+<blockquote class="goal"><strong>Goal:</strong> Prove Cloud WAN inter-CNE transport works and the segment boundary is preserved across Regions.</blockquote>
+
+<h2 id="s7-1">7.1 Region-Pair Matrix</h2>
+<p>Execute for each segment where cross-region intra-segment traffic is permitted (Prod, Non-Prod, Shared Services):</p>
+<table>
+<thead><tr><th>Test ID</th><th>Source Region</th><th>Dest Region</th><th>ICMP</th><th>iperf3 (Mbps)</th><th>Latency p95 (ms)</th><th>In-Seg?</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-07-001</td><td>us-east-1</td><td>us-east-2</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>TC-07-002</td><td>us-east-1</td><td>us-west-2</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>TC-07-003</td><td>us-east-2</td><td>us-west-2</td><td></td><td></td><td></td><td></td><td></td></tr>
+</tbody>
+</table>
+
+<h1 id="s8">8. Inter-Segment Isolation (Default-Deny)</h1>
+<blockquote class="goal"><strong>Goal:</strong> Prove segments cannot reach each other without explicit share actions in the Core Network Policy.</blockquote>
+
+<h2 id="s8-1">8.1 Test Matrix</h2>
+<table>
+<thead><tr><th>Test ID</th><th>Source</th><th>Destination</th><th>Scope</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-08-001</td><td>Prod</td><td>Non-Prod</td><td>Same Region</td><td>DENIED</td><td></td></tr>
+<tr><td>TC-08-002</td><td>Prod</td><td>Non-Prod</td><td>Cross-Region (all pairs)</td><td>DENIED</td><td></td></tr>
+<tr><td>TC-08-003</td><td>Non-Prod</td><td>Prod</td><td>Same Region</td><td>DENIED</td><td></td></tr>
+<tr><td>TC-08-004</td><td>Non-Prod</td><td>Prod</td><td>Cross-Region</td><td>DENIED</td><td></td></tr>
+<tr><td>TC-08-005</td><td>Prod</td><td>Hybrid</td><td>Any</td><td>DENIED unless shared via Inspection</td><td></td></tr>
+<tr><td>TC-08-006</td><td>Non-Prod</td><td>Hybrid</td><td>Any</td><td>DENIED unless shared via Inspection</td><td></td></tr>
+<tr><td>TC-08-007</td><td>Non-Prod</td><td>Shared Services</td><td>Direct (bypass Inspection)</td><td>DENIED</td><td></td></tr>
+</tbody>
+</table>
+<blockquote class="note"><strong>Note:</strong> Failure mode to watch — an overly permissive share-with list in the policy segment-actions block. If a deny test passes unexpectedly, audit segment-actions before anything else.</blockquote>
+
+<h1 id="s9">9. Inspection Path Enforcement</h1>
+<blockquote class="goal"><strong>Goal:</strong> Prove every permitted cross-segment flow is inspected by the stateful firewall.</blockquote>
+
+<h2 id="s9-1">9.1 Permitted Flow Matrix</h2>
+<p>Verify each flow with firewall session logs AND <code>tcpdump</code> on the firewall data interface:</p>
+<table>
+<thead><tr><th>Test ID</th><th>Flow</th><th>Scope</th><th>Expected Firewall Behavior</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-09-001</td><td>Prod → Shared Services</td><td>Same Region</td><td>Session logged, allowed</td><td></td></tr>
+<tr><td>TC-09-002</td><td>Prod → Shared Services</td><td>Cross-Region</td><td>Session logged (document which Region's FW)</td><td></td></tr>
+<tr><td>TC-09-003</td><td>Non-Prod → Shared Services</td><td>Same + Cross-Region</td><td>Session logged, allowed</td><td></td></tr>
+<tr><td>TC-09-004</td><td>Shared Services → Prod (return)</td><td>Any</td><td>Symmetric path, same flow</td><td></td></tr>
+<tr><td>TC-09-005</td><td>Prod → On-Prem via Hybrid</td><td>Any</td><td>Session logged, allowed</td><td></td></tr>
+<tr><td>TC-09-006</td><td>On-Prem → Prod</td><td>Any</td><td>Session logged, allowed</td><td></td></tr>
+<tr><td>TC-09-007</td><td>Prod us-east-1 → Prod us-west-2</td><td>Cross-Region</td><td>Inspected per design [source / dest / both]</td><td></td></tr>
+<tr><td>TC-09-008</td><td>Block rule injection test</td><td>Any allowed flow</td><td>Traffic dropped and logged when rule added</td><td></td></tr>
+</tbody>
+</table>
+
+<h2 id="s9-2">9.2 Anti-Test: Inspection Bypass</h2>
+<table>
+<thead><tr><th>Test ID</th><th>Procedure</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-09-009</td><td>Add a static route in a segment route table pointing directly at another segment's attachment; attempt traffic</td><td>Policy prevents the route, or traffic still forced through Inspection. If traffic bypasses Inspection, FAIL — critical defect</td><td></td></tr>
+</tbody>
+</table>
+
+<h1 id="s10">10. Shared Services Reachability</h1>
+<blockquote class="goal"><strong>Goal:</strong> Prove core platform services are reachable from all consumer segments across all Regions.</blockquote>
+<table>
+<thead><tr><th>Test ID</th><th>Source</th><th>Service</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-10-001</td><td>Prod (all Regions)</td><td>DNS resolver (internal + external names)</td><td>Resolution succeeds</td><td></td></tr>
+<tr><td>TC-10-002</td><td>Non-Prod (all Regions)</td><td>DNS resolver</td><td>Resolution succeeds</td><td></td></tr>
+<tr><td>TC-10-003</td><td>Prod (all Regions)</td><td>AD LDAP bind</td><td>Bind succeeds</td><td></td></tr>
+<tr><td>TC-10-004</td><td>Non-Prod (all Regions)</td><td>AD LDAP bind</td><td>Bind succeeds</td><td></td></tr>
+<tr><td>TC-10-005</td><td>All probes</td><td>NTP to Shared Services time source</td><td>Sync succeeds</td><td></td></tr>
+<tr><td>TC-10-006</td><td>All probes</td><td>Syslog / CloudWatch agent to log aggregator</td><td>Logs arrive at aggregator</td><td></td></tr>
+<tr><td>TC-10-007</td><td>All probes</td><td>Patch / config management endpoint</td><td>Reachable</td><td></td></tr>
+<tr><td>TC-10-008</td><td>probe-prod-usw2</td><td>Cross-Region Shared Services (if centralized)</td><td>Latency acceptable for AD auth (document)</td><td></td></tr>
+</tbody>
+</table>
+
+<h1 id="s11">11. Hybrid Segment and On-Premises Flows</h1>
+<blockquote class="goal"><strong>Goal:</strong> Prove on-premises ↔ AWS traffic flows correctly across four on-premises data centers via two Secure DMZs (DX termination routers), is inspected, and fails over cleanly at both the DX and DMZ levels.</blockquote>
+
+<h2 id="s11-1">11.1 Data Plane — Per-DC Reachability via Both DMZs</h2>
+<table>
+<thead><tr><th>Test ID</th><th>Source</th><th>Destination</th><th>Via DMZ</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-11-001</td><td>probe-prod-use1</td><td>probe-onprem-dc1</td><td>DMZ-A (primary)</td><td>Reachable, inspected, uses DMZ-A</td><td></td></tr>
+<tr><td>TC-11-002</td><td>probe-prod-use1</td><td>probe-onprem-dc2</td><td>DMZ-A (primary)</td><td>Reachable, inspected, uses DMZ-A</td><td></td></tr>
+<tr><td>TC-11-003</td><td>probe-prod-use1</td><td>probe-onprem-dc3</td><td>DMZ-B (primary)</td><td>Reachable, inspected, uses DMZ-B</td><td></td></tr>
+<tr><td>TC-11-004</td><td>probe-prod-use1</td><td>probe-onprem-dc4</td><td>DMZ-B (primary)</td><td>Reachable, inspected, uses DMZ-B</td><td></td></tr>
+<tr><td>TC-11-005</td><td>probe-nonprod-use1</td><td>DC1–DC4</td><td>Per design</td><td>Reachable, inspected</td><td></td></tr>
+<tr><td>TC-11-006</td><td>probe-shared-use1</td><td>DC1–DC4</td><td>Per design</td><td>Reachable, inspected</td><td></td></tr>
+<tr><td>TC-11-007</td><td>On-prem DC1–DC4</td><td>Prod VPC (return)</td><td>Symmetric</td><td>Return path via same DMZ and firewall</td><td></td></tr>
+<tr><td>TC-11-008</td><td>On-prem DC1</td><td>Prod in Region without local DX</td><td>Via Cloud WAN</td><td>Transits Cloud WAN to correct landing Region</td><td></td></tr>
+<tr><td>TC-11-009</td><td>On-prem DC3</td><td>Prod in Region without local DX</td><td>Via Cloud WAN</td><td>Transits Cloud WAN to correct landing Region</td><td></td></tr>
+</tbody>
+</table>
+
+<h2 id="s11-2">11.2 Data Plane — Cross-DMZ Coverage</h2>
+<p>Prove each DC is reachable through the non-primary DMZ after failover (or that the design intentionally blackholes — document which):</p>
+<table>
+<thead><tr><th>Test ID</th><th>Source</th><th>Destination</th><th>Forced Path</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-11-010</td><td>probe-prod-use1</td><td>probe-onprem-dc1</td><td>DMZ-B (secondary)</td><td>Reachable after DMZ-A withdrawal</td><td></td></tr>
+<tr><td>TC-11-011</td><td>probe-prod-use1</td><td>probe-onprem-dc2</td><td>DMZ-B (secondary)</td><td>Reachable after DMZ-A withdrawal</td><td></td></tr>
+<tr><td>TC-11-012</td><td>probe-prod-use1</td><td>probe-onprem-dc3</td><td>DMZ-A (secondary)</td><td>Reachable after DMZ-B withdrawal</td><td></td></tr>
+<tr><td>TC-11-013</td><td>probe-prod-use1</td><td>probe-onprem-dc4</td><td>DMZ-A (secondary)</td><td>Reachable after DMZ-B withdrawal</td><td></td></tr>
+</tbody>
+</table>
+
+<h2 id="s11-3">11.3 Control Plane (BGP)</h2>
+<table>
+<thead><tr><th>Test ID</th><th>Check</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-11-014</td><td>DX BGP neighbors on DMZ-A routers</td><td>All Established</td><td></td></tr>
+<tr><td>TC-11-015</td><td>DX BGP neighbors on DMZ-B routers</td><td>All Established</td><td></td></tr>
+<tr><td>TC-11-016</td><td>Prefixes advertised to on-prem (both DMZs)</td><td>Match approved list; no Inspection internals leaked</td><td></td></tr>
+<tr><td>TC-11-017</td><td>On-prem receives AWS prefixes via DMZ-A</td><td>Expected AS-path and communities present</td><td></td></tr>
+<tr><td>TC-11-018</td><td>On-prem receives AWS prefixes via DMZ-B</td><td>Expected AS-path and communities present</td><td></td></tr>
+<tr><td>TC-11-019</td><td>BGP community tagging for DMZ affinity (DC1/DC2 → DMZ-A, DC3/DC4 → DMZ-B)</td><td>Correct primary path selected under steady state</td><td></td></tr>
+<tr><td>TC-11-020</td><td>AS-path prepending or MED on secondary DMZ</td><td>Secondary path less preferred, not equal-cost</td><td></td></tr>
+</tbody>
+</table>
+
+<h2 id="s11-4">11.4 Failover</h2>
+<table>
+<thead><tr><th>Test ID</th><th>Scenario</th><th>Expected</th><th>Target (s)</th><th>Actual</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-11-021</td><td>Single DX circuit down on DMZ-A</td><td>Traffic fails to surviving DX in same DMZ</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-11-022</td><td>All DX circuits on DMZ-A down</td><td>Traffic fails over to DMZ-B for DC1/DC2</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-11-023</td><td>All DX circuits on DMZ-B down</td><td>Traffic fails over to DMZ-A for DC3/DC4</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-11-024</td><td>Entire Secure DMZ-A offline (router failure)</td><td>BGP withdraws; DMZ-B takes all DC traffic</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-11-025</td><td>Entire Secure DMZ-B offline</td><td>BGP withdraws; DMZ-A takes all DC traffic</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-11-026</td><td>DXGW association withdrawn</td><td>Reroute via alternate Region DXGW (split-DXGW)</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-11-027</td><td>Regional Inspection VPC failure</td><td>Hybrid reroutes or fails-closed per design</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-11-028</td><td>DMZ recovery — return to steady state</td><td>Preferred paths restore without blackhole or flap</td><td>[sec]</td><td></td><td></td></tr>
+</tbody>
+</table>
+
+<h1 id="s12">12. M&amp;A Acquisition Flows</h1>
+<blockquote class="goal"><strong>Goal:</strong> Prove acquired networks reach only their approved segments and are always inspected.</blockquote>
+<table>
+<thead><tr><th>Test ID</th><th>Test</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-12-001</td><td>M&amp;A network → designated segment</td><td>Reachable, inspected</td><td></td></tr>
+<tr><td>TC-12-002</td><td>M&amp;A network → non-approved segments</td><td>DENIED</td><td></td></tr>
+<tr><td>TC-12-003</td><td>Prod → M&amp;A</td><td>Allowed only if explicit in policy</td><td></td></tr>
+<tr><td>TC-12-004</td><td>M&amp;A with overlapping CIDR</td><td>NAT or route filtering behaves per design</td><td></td></tr>
+<tr><td>TC-12-005</td><td>M&amp;A BGP advertisements</td><td>Filtered; do not pollute internal route tables</td><td></td></tr>
+<tr><td>TC-12-006</td><td>Simulated M&amp;A divestiture (remove connectivity)</td><td>Routes withdraw cleanly; no impact to other segments</td><td></td></tr>
+</tbody>
+</table>
+
+<h1 id="s13">13. Internet Ingress and Egress Inspection</h1>
+<blockquote class="goal"><strong>Goal:</strong> Prove both inbound and outbound internet traffic is forced through the designated Inspection/Ingress path, no local bypass exists, and return paths are symmetric.</blockquote>
+<blockquote class="note"><strong>Note:</strong> Ingress architecture under test — inbound internet traffic lands at a centralized ingress point (Ingress VPC or Inspection VPC public subnets) per Region, passes WAF / IPS inspection, and is forwarded to the destination segment only via inspected paths.</blockquote>
+
+<h2 id="s13-1">13.1 Egress Inspection</h2>
+<table>
+<thead><tr><th>Test ID</th><th>Test</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-13-001</td><td>Prod workload curl to external host</td><td>Succeeds; firewall session logged</td><td></td></tr>
+<tr><td>TC-13-002</td><td>Non-Prod workload to internet</td><td>Succeeds; firewall session logged</td><td></td></tr>
+<tr><td>TC-13-003</td><td>Workload attempt to reach a local IGW (if present)</td><td>Fails, or flagged as policy violation</td><td></td></tr>
+<tr><td>TC-13-004</td><td>URL filtering / threat prevention rule test domain</td><td>Blocked as expected</td><td></td></tr>
+<tr><td>TC-13-005</td><td>us-west-2 workload egress</td><td>Uses us-west-2 Inspection VPC (no hairpin to us-east-1)</td><td></td></tr>
+<tr><td>TC-13-006</td><td>Egress source IP / NAT</td><td>Presents approved public IP / NAT pool per Region</td><td></td></tr>
+<tr><td>TC-13-007</td><td>Egress DNS resolution path</td><td>Uses Shared Services resolver, not public Route 53 direct</td><td></td></tr>
+</tbody>
+</table>
+
+<h2 id="s13-2">13.2 Ingress Inspection — Data Plane</h2>
+<table>
+<thead><tr><th>Test ID</th><th>Test</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-13-008</td><td>Inbound HTTPS to Prod public endpoint (each Region)</td><td>Lands at Ingress VPC, inspected, forwarded to Prod target</td><td></td></tr>
+<tr><td>TC-13-009</td><td>Inbound HTTPS to Non-Prod public endpoint</td><td>Lands at Ingress VPC, inspected, forwarded to Non-Prod target</td><td></td></tr>
+<tr><td>TC-13-010</td><td>Inbound traffic attempting to reach Prod via a direct IGW (bypass)</td><td>Denied or no route exists; confirmed via route tables</td><td></td></tr>
+<tr><td>TC-13-011</td><td>Inbound from internet → Shared Services public endpoint (if any)</td><td>Inspected; otherwise confirm no public exposure by design</td><td></td></tr>
+<tr><td>TC-13-012</td><td>Return path for inspected ingress session</td><td>Symmetric — returns through same Ingress/Inspection firewall</td><td></td></tr>
+<tr><td>TC-13-013</td><td>Ingress targeting us-west-2-hosted service</td><td>Uses us-west-2 ingress path (no hairpin through us-east-1)</td><td></td></tr>
+<tr><td>TC-13-014</td><td>Ingress targeting cross-Region backend (client near us-west-2, backend in us-east-1)</td><td>Inspected at ingress Region per design; documented path</td><td></td></tr>
+</tbody>
+</table>
+
+<h2 id="s13-3">13.3 Ingress Security Controls</h2>
+<table>
+<thead><tr><th>Test ID</th><th>Test</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-13-015</td><td>WAF rule test (SQLi / XSS payload against public endpoint)</td><td>Blocked by WAF; logged to SIEM</td><td></td></tr>
+<tr><td>TC-13-016</td><td>Geo-block rule (if applied)</td><td>Requests from blocked geography denied</td><td></td></tr>
+<tr><td>TC-13-017</td><td>Rate limiting / DDoS protection</td><td>Excess requests throttled per policy; Shield/WAF metrics increment</td><td></td></tr>
+<tr><td>TC-13-018</td><td>TLS inspection / termination point</td><td>Matches design (edge-terminated vs passthrough); cert chain valid</td><td></td></tr>
+<tr><td>TC-13-019</td><td>IPS signature trigger (known malicious pattern)</td><td>Blocked and logged</td><td></td></tr>
+<tr><td>TC-13-020</td><td>Unapproved port/protocol inbound (e.g., inbound SSH from internet)</td><td>Denied at ingress firewall</td><td></td></tr>
+</tbody>
+</table>
+
+<h2 id="s13-4">13.4 Ingress Anti-Tests</h2>
+<table>
+<thead><tr><th>Test ID</th><th>Procedure</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-13-021</td><td>Attach a public IP / EIP directly to a Prod workload ENI, attempt inbound</td><td>Denied by SCP / policy, or traffic still forced through Ingress VPC. Direct reachability = FAIL — critical defect</td><td></td></tr>
+<tr><td>TC-13-022</td><td>Create an IGW attachment on a segment VPC, attempt inbound flow</td><td>Policy prevents creation, or traffic does not reach workload without inspection</td><td></td></tr>
+<tr><td>TC-13-023</td><td>Asymmetric ingress/egress test (inbound via Ingress VPC, return via different path)</td><td>Return forced through same firewall; asymmetric flow = FAIL</td><td></td></tr>
+</tbody>
+</table>
+
+<h2 id="s13-5">13.5 Ingress Failover</h2>
+<table>
+<thead><tr><th>Test ID</th><th>Scenario</th><th>Expected</th><th>Target (s)</th><th>Actual</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-13-024</td><td>Single Ingress VPC AZ failure</td><td>Traffic fails to surviving AZ; no session blackhole</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-13-025</td><td>Regional Ingress VPC offline</td><td>Per design: DNS failover to alternate Region, or fail-closed</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-13-026</td><td>WAF / IPS appliance failure</td><td>Fails open or closed per policy (document which)</td><td>[sec]</td><td></td><td></td></tr>
+</tbody>
+</table>
+
+<h1 id="s14">14. Resiliency and Failover</h1>
+<blockquote class="goal"><strong>Goal:</strong> Prove the design survives single-component failures within acceptable convergence windows.</blockquote>
+<table>
+<thead><tr><th>Test ID</th><th>Scenario</th><th>Expected</th><th>Target (s)</th><th>Actual</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-14-001</td><td>Single AZ failure in Inspection VPC</td><td>Failover to other AZ firewall</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-14-002</td><td>Full regional Inspection VPC failure</td><td>Per design: fail-closed or reroute to neighbor Region</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-14-003</td><td>CNE unreachable in one Region</td><td>Cross-Region traffic reroutes or fails per design</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-14-004</td><td>DXGW failure</td><td>Hybrid traffic fails over to backup</td><td>[sec]</td><td></td><td></td></tr>
+<tr><td>TC-14-005</td><td>Asymmetric routing check post-failover</td><td>Return path uses same firewall; sessions preserved</td><td>N/A</td><td></td><td></td></tr>
+</tbody>
+</table>
+
+<h1 id="s15">15. BGP and Routing Validation</h1>
+<blockquote class="goal"><strong>Goal:</strong> Prove routing is clean, deterministic, and aligned with intent.</blockquote>
+<table>
+<thead><tr><th>Test ID</th><th>Check</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-15-001</td><td>Segment route table audit</td><td>Only expected prefixes; no leaks</td><td></td></tr>
+<tr><td>TC-15-002</td><td>Default route review</td><td>Default points to Inspection where required; not to local IGW</td><td></td></tr>
+<tr><td>TC-15-003</td><td>Prefix counts vs service quotas</td><td>Within DXGW and CNE limits</td><td></td></tr>
+<tr><td>TC-15-004</td><td>MTU end-to-end (standard)</td><td><code>ping -M do -s 1472</code> success probe-to-probe and probe-to-on-prem</td><td></td></tr>
+<tr><td>TC-15-005</td><td>MTU end-to-end (jumbo, if applicable)</td><td>Success at design MTU</td><td></td></tr>
+<tr><td>TC-15-006</td><td>Backup path</td><td>Traffic failover through the redundant circuit and on-premise DC backbone</td><td></td></tr>
+</tbody>
+</table>
+
+<h1 id="s16">16. Logging, Observability, and Alerting</h1>
+<blockquote class="goal"><strong>Goal:</strong> Prove operations will see it when something breaks.</blockquote>
+<table>
+<thead><tr><th>Test ID</th><th>Check</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-16-001</td><td>VPC Flow Logs enabled on all segment VPCs</td><td>Confirmed in log store</td><td></td></tr>
+<tr><td>TC-16-002</td><td>Firewall logs forwarded to SIEM / central log store</td><td>Events present</td><td></td></tr>
+<tr><td>TC-16-003</td><td>Network Manager events to CloudWatch</td><td>Events present</td><td></td></tr>
+<tr><td>TC-16-004</td><td>Alarm: BGP neighbor down</td><td>Fires on test</td><td></td></tr>
+<tr><td>TC-16-005</td><td>Alarm: DX connection down</td><td>Fires on test</td><td></td></tr>
+<tr><td>TC-16-006</td><td>Alarm: CNE attachment state change</td><td>Fires on test</td><td></td></tr>
+<tr><td>TC-16-007</td><td>Alarm: firewall CPU / memory thresholds</td><td>Fires on test</td><td></td></tr>
+<tr><td>TC-16-008</td><td>Synthetic probes on critical paths</td><td>Running, alerting on failure</td><td></td></tr>
+<tr><td>TC-16-009</td><td>Core Network Policy change notification</td><td>SNS / Chatbot / ticket fires</td><td></td></tr>
+</tbody>
+</table>
+
+<h1 id="s17">17. Policy and Change Safety</h1>
+<blockquote class="goal"><strong>Goal:</strong> Prove the Core Network Policy itself is managed safely.</blockquote>
+<table>
+<thead><tr><th>Test ID</th><th>Check</th><th>Expected</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>TC-17-001</td><td>Core Network Policy in version control</td><td>Repo + last commit identified</td><td></td></tr>
+<tr><td>TC-17-002</td><td>Change review uses <code>describe-core-network-change-set</code> dry-run</td><td>Evidence attached to change record</td><td></td></tr>
+<tr><td>TC-17-003</td><td>Rollback to prior policy version</td><td>Successful on non-impacting change</td><td></td></tr>
+<tr><td>TC-17-004</td><td>IAM review: policy modification principals</td><td>Only approved principals have write access</td><td></td></tr>
+</tbody>
+</table>
+
+</body>
+</html>
