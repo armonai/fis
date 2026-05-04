@@ -1,0 +1,310 @@
+<html>
+<head>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 960px; margin: 0 auto; padding: 20px; color: #1a1a1a; line-height: 1.6; }
+  h1 { color: #1B4F72; border-bottom: 3px solid #1B4F72; padding-bottom: 8px; }
+  h2 { color: #7B1FA2; margin-top: 36px; border-left: 4px solid #7B1FA2; padding-left: 12px; }
+  .flow-box { background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 16px 0 28px 0; }
+  .flow-path { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 14px 18px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 13px; line-height: 2; color: #333; }
+  .flow-path .arrow { color: #ED7100; font-weight: bold; }
+  .flow-path .inspect { color: #7B1FA2; font-weight: bold; }
+  .flow-path .hybrid { color: #00695C; font-weight: bold; }
+  .flow-path .egress { color: #00897B; font-weight: bold; }
+  .flow-path .ingress { color: #E65100; font-weight: bold; }
+  .flow-path .mna { color: #C62828; font-weight: bold; }
+  .key-point { background: #FFF3E0; border-left: 4px solid #ED7100; padding: 10px 14px; margin: 12px 0; font-size: 13px; }
+  .key-point strong { color: #E65100; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+  th { background: #7B1FA2; color: white; padding: 10px 14px; text-align: left; font-size: 13px; }
+  td { padding: 10px 14px; border: 1px solid #ddd; font-size: 13px; vertical-align: top; }
+  tr:nth-child(even) { background: #f8f9fa; }
+  .label { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; margin-right: 4px; }
+  .label-ingress { background: #E65100; }
+  .label-egress { background: #00897B; }
+  .label-ew { background: #7B1FA2; }
+  .label-ns { background: #00695C; }
+  .label-mna { background: #C62828; }
+  .label-shared { background: #F57F17; }
+</style>
+</head>
+<body>
+
+<h1>MCBB 3.0 — Traffic Flow Descriptions</h1>
+<p><em>AWS Cloud WAN Lab Architecture — Decentralized Ingress/Egress | Centralized Inspection (GWLB + Palo Alto NVA) | DXGW per Region | Dual DX per Edge Connect</em></p>
+
+<table>
+<tr>
+  <th>Flow Direction</th>
+  <th>Inspection?</th>
+  <th>C-WAN Policy</th>
+  <th>Key Component</th>
+</tr>
+<tr>
+  <td><span class="label label-ingress">❶ Ingress</span> Internet → EC2</td>
+  <td>Yes — centralized</td>
+  <td>send-to Inspection</td>
+  <td>Per-region IGW + ALB/WAF + GWLBe</td>
+</tr>
+<tr>
+  <td><span class="label label-egress">Egress</span> EC2 → Internet</td>
+  <td>Yes — centralized</td>
+  <td>send-to Inspection</td>
+  <td>Regional NAT GW (per Inspection VPC)</td>
+</tr>
+<tr>
+  <td><span class="label label-ew">①-⑤ East-West</span> Prod ↔ Non-Prod</td>
+  <td>Yes — centralized</td>
+  <td>send-to Inspection</td>
+  <td>Segment isolation enforcement</td>
+</tr>
+<tr>
+  <td><span class="label label-ns">N-S Outbound</span> EC2 → On-Prem</td>
+  <td>Yes — centralized</td>
+  <td>send-via Inspection</td>
+  <td>DXGW per region + Dual DX + Fabric</td>
+</tr>
+<tr>
+  <td><span class="label label-ns">N-S Inbound</span> On-Prem → EC2</td>
+  <td>Yes — centralized</td>
+  <td>send-via Inspection</td>
+  <td>DXGW per region + Dual DX + Fabric</td>
+</tr>
+<tr>
+  <td><span class="label label-mna">M&amp;A</span> Acquisitions → Prod</td>
+  <td>Yes — centralized</td>
+  <td>MnA → Inspection</td>
+  <td>FiservMnA TGW + TGW Attachment RT</td>
+</tr>
+<tr>
+  <td><span class="label label-shared">Shared Svc</span> Any Seg → Shared</td>
+  <td>No — direct peering</td>
+  <td>Segment peering</td>
+  <td>R53, CloudWatch, S3 Logs</td>
+</tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>❶ Ingress (Internet → Workload EC2)</h2>
+<!-- ============================================================ -->
+<div class="flow-box">
+<div class="flow-path">
+  <span class="ingress">Internet</span> <span class="arrow">→</span>
+  <span class="ingress">Regional IGW</span> (per-region, e.g. IGW use1) <span class="arrow">→</span>
+  Workload VPC Public Subnet <span class="arrow">→</span>
+  <span class="ingress">ALB</span> receives traffic <span class="arrow">→</span>
+  <span class="ingress">WAF</span> inspects L7 <span class="arrow">→</span>
+  ALB forwards to <span class="ingress">GWLBe</span> (in workload VPC) <span class="arrow">→</span>
+  GWLBe routes via ingress routing table to <strong>C-WAN Attachment</strong> <span class="arrow">→</span>
+  <span class="inspect">C-WAN Prod Segment</span> <span class="arrow">→</span>
+  C-WAN policy: <span class="inspect">send-to Inspection Segment</span> <span class="arrow">→</span>
+  <span class="inspect">Inspection VPC C-WAN Attachment Subnet</span> <span class="arrow">→</span>
+  <span class="inspect">GWLB</span> (GENEVE encapsulation) <span class="arrow">→</span>
+  <span class="inspect">Palo Alto NVA</span> inspects (IPS/IDS, threat prevention, URL filtering) <span class="arrow">→</span>
+  returns to <span class="inspect">GWLB</span> <span class="arrow">→</span>
+  <span class="inspect">C-WAN Attachment Subnet</span> <span class="arrow">→</span>
+  re-enters <span class="inspect">C-WAN Prod Segment</span> <span class="arrow">→</span>
+  back to Workload VPC <span class="arrow">→</span>
+  <strong>EC2</strong> in private subnet
+</div>
+
+<div class="key-point">
+  <strong>Key:</strong> Even though each workload VPC has its own IGW and ALB/WAF (decentralized ingress), Cloud WAN is in the path. All traffic is centrally inspected via GWLB + Palo Alto before reaching EC2. The GWLBe in the workload VPC is what redirects ingress traffic into the C-WAN inspection path.
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Egress (Workload EC2 → Internet)</h2>
+<!-- ============================================================ -->
+<div class="flow-box">
+<div class="flow-path">
+  <strong>EC2</strong> (private subnet) <span class="arrow">→</span>
+  Workload VPC route table: <code>0.0.0.0/0 → cwan-att</code> <span class="arrow">→</span>
+  <strong>C-WAN Attachment</strong> in workload VPC <span class="arrow">→</span>
+  <span class="inspect">C-WAN Prod Segment</span> <span class="arrow">→</span>
+  C-WAN policy: <span class="inspect">send-to Inspection Segment</span> <span class="arrow">→</span>
+  <span class="inspect">Inspection VPC C-WAN Attachment Subnet</span> <span class="arrow">→</span>
+  <span class="inspect">GWLB</span> (GENEVE) <span class="arrow">→</span>
+  <span class="inspect">Palo Alto NVA</span> inspects outbound (URL filtering, data exfiltration prevention) <span class="arrow">→</span>
+  returns to <span class="inspect">GWLB</span> <span class="arrow">→</span>
+  Inspection VPC FW Subnet route table: <code>0.0.0.0/0 → Regional NAT GW</code> <span class="arrow">→</span>
+  <span class="egress">Regional NAT GW</span> (e.g. Regional USE1 NGW) <span class="arrow">→</span>
+  NAT translates private → public IP <span class="arrow">→</span>
+  <span class="egress">Regional IGW</span> <span class="arrow">→</span>
+  <span class="egress">Internet</span>
+</div>
+
+<div class="key-point">
+  <strong>Key:</strong> Egress does NOT use the workload VPC's NAT GW. Traffic exits through the Regional NAT GW associated with the Inspection VPC in the Network/Security Account. This ensures all outbound traffic is inspected by Palo Alto before leaving AWS. Each region has its own Regional NGW for egress.
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>①-⑤ East-West (Prod VPC ↔ Non-Prod VPC)</h2>
+<!-- ============================================================ -->
+<div class="flow-box">
+<div class="flow-path">
+  ① <strong>EC2</strong> in Prod VPC <span class="arrow">→</span>
+  VPC route table: <code>0.0.0.0/0 → cwan-att</code> <span class="arrow">→</span>
+  traffic enters <span class="inspect">C-WAN Prod Segment</span> <span class="arrow">→</span><br>
+  ② C-WAN segment policy: <span class="inspect">send-to Inspection Segment</span> (Prod cannot reach Non-Prod directly) <span class="arrow">→</span><br>
+  ③ <span class="inspect">Inspection VPC C-WAN Attachment Subnet</span> <span class="arrow">→</span>
+  <span class="inspect">GWLB</span> (GENEVE) <span class="arrow">→</span>
+  <span class="inspect">Palo Alto NVA</span> inspects (microsegmentation, inter-segment policy) <span class="arrow">→</span><br>
+  ④ returns to <span class="inspect">GWLB</span> <span class="arrow">→</span>
+  <span class="inspect">C-WAN Attachment Subnet</span> <span class="arrow">→</span>
+  re-enters C-WAN <span class="arrow">→</span>
+  routed to <strong>Non-Prod Segment</strong> <span class="arrow">→</span><br>
+  ⑤ traffic delivered to <strong>Non-Prod VPC</strong> <span class="arrow">→</span>
+  <strong>EC2</strong> in Non-Prod
+</div>
+
+<div class="key-point">
+  <strong>Key:</strong> Segment isolation is enforced by C-WAN policy. Prod and Non-Prod are separate segments — they cannot communicate without traversing the Inspection segment. This is the "send-to" routing mode. Same pattern applies for any cross-segment communication.
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>North-South Outbound (Workload EC2 → On-Prem DC)</h2>
+<!-- ============================================================ -->
+<div class="flow-box">
+<div class="flow-path">
+  <strong>EC2</strong> (Prod VPC) <span class="arrow">→</span>
+  VPC route table: on-prem prefixes (e.g. <code>10.0.0.0/8 → cwan-att</code>) <span class="arrow">→</span>
+  <span class="inspect">C-WAN Prod Segment</span> <span class="arrow">→</span>
+  C-WAN policy: <span class="inspect">send-via Inspection Segment</span> <span class="arrow">→</span>
+  <span class="inspect">Inspection VPC C-WAN Attachment Subnet</span> <span class="arrow">→</span>
+  <span class="inspect">GWLB</span> (GENEVE) <span class="arrow">→</span>
+  <span class="inspect">Palo Alto NVA</span> inspects <span class="arrow">→</span>
+  returns to <span class="inspect">GWLB</span> <span class="arrow">→</span>
+  <span class="inspect">C-WAN Attachment Subnet</span> <span class="arrow">→</span>
+  re-enters C-WAN <span class="arrow">→</span>
+  <span class="hybrid">Hybrid Segment</span> <span class="arrow">→</span>
+  <span class="hybrid">DXGW</span> for region (e.g. <code>dxgw-use1</code>) <span class="arrow">→</span>
+  <span class="hybrid">Dual DX connections</span> (redundant, per edge connect) <span class="arrow">→</span>
+  On-Prem S-DMZ <span class="arrow">→</span>
+  <span class="hybrid">Fabric / CloudOne</span> (Fiserv Global Backbone) <span class="arrow">→</span>
+  destination <strong>Data Center</strong> (USOMA01, USCHD01, UCHCZ01, DEFRA, APAC)
+</div>
+
+<div class="key-point">
+  <strong>Key:</strong> The "send-via" policy means traffic must pass through Inspection before reaching the Hybrid segment. The DXGW is geo-bound per region — <code>dxgw-use1</code> serves us-east-1, <code>dxgw-use2</code> serves us-east-2, <code>dxgw-usw2</code> serves us-west-2. No cross-geo leakage. Each DXGW has dual DX connections for redundancy at the edge connect location. Traffic traverses the Fabric/CloudOne backbone to reach the target DC.
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>North-South Inbound (On-Prem DC → Workload EC2)</h2>
+<!-- ============================================================ -->
+<div class="flow-box">
+<div class="flow-path">
+  On-Prem <strong>Data Center</strong> (e.g. USOMA01) <span class="arrow">→</span>
+  <span class="hybrid">Fabric / CloudOne</span> backbone <span class="arrow">→</span>
+  On-Prem S-DMZ <span class="arrow">→</span>
+  <span class="hybrid">Dual DX connections</span> (redundant via Megaport / edge connect) <span class="arrow">→</span>
+  <span class="hybrid">DXGW</span> for target region (e.g. <code>dxgw-use1</code>) <span class="arrow">→</span>
+  C-WAN <span class="hybrid">Hybrid Segment</span> <span class="arrow">→</span>
+  C-WAN policy: <span class="inspect">send-via Inspection Segment</span> <span class="arrow">→</span>
+  <span class="inspect">Inspection VPC C-WAN Attachment Subnet</span> <span class="arrow">→</span>
+  <span class="inspect">GWLB</span> (GENEVE) <span class="arrow">→</span>
+  <span class="inspect">Palo Alto NVA</span> inspects inbound on-prem traffic <span class="arrow">→</span>
+  returns to <span class="inspect">GWLB</span> <span class="arrow">→</span>
+  <span class="inspect">C-WAN Attachment Subnet</span> <span class="arrow">→</span>
+  re-enters C-WAN <span class="arrow">→</span>
+  <strong>Prod Segment</strong> <span class="arrow">→</span>
+  <strong>Prod VPC</strong> <span class="arrow">→</span>
+  <strong>EC2</strong>
+</div>
+
+<div class="key-point">
+  <strong>Key:</strong> Same inspection enforcement in reverse. On-prem traffic entering via the Hybrid segment MUST traverse Inspection before reaching any workload segment. The split DXGW design ensures traffic stays geo-local — US DCs use US DXGWs. Traffic originates from a DC, traverses the Fabric/CloudOne backbone, passes through the S-DMZ, and enters AWS via redundant DX connections.
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>M&amp;A Flow (Acquisitions Account → Workload EC2)</h2>
+<!-- ============================================================ -->
+<div class="flow-box">
+<div class="flow-path">
+  Acquisition workload <span class="arrow">→</span>
+  <span class="mna">Existing FiservMnA TGW</span> <span class="arrow">→</span>
+  <span class="mna">Transit Gateway Attachment Route Table (CloudWAN)</span> <span class="arrow">→</span>
+  TGW peering attachment <span class="arrow">→</span>
+  C-WAN <span class="mna">MnA Segment</span> <span class="arrow">→</span>
+  C-WAN policy routes to <span class="inspect">Inspection Segment</span> <span class="arrow">→</span>
+  <span class="inspect">Inspection VPC C-WAN Attachment Subnet</span> <span class="arrow">→</span>
+  <span class="inspect">GWLB</span> (GENEVE) <span class="arrow">→</span>
+  <span class="inspect">Palo Alto NVA</span> inspects (M&amp;A traffic is untrusted) <span class="arrow">→</span>
+  returns to <span class="inspect">GWLB</span> <span class="arrow">→</span>
+  <span class="inspect">C-WAN Attachment Subnet</span> <span class="arrow">→</span>
+  re-enters C-WAN <span class="arrow">→</span>
+  <strong>Prod Segment</strong> <span class="arrow">→</span>
+  <strong>Prod VPC</strong> <span class="arrow">→</span>
+  <strong>EC2</strong>
+</div>
+
+<div class="key-point">
+  <strong>Key:</strong> M&amp;A traffic enters Cloud WAN via the legacy TGW peering attachment into a dedicated MnA segment. This keeps acquired company traffic isolated in its own segment and always inspected before reaching production workloads. Two FiservMnA TGWs provide redundancy for the M&amp;A integration path.
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Shared Services (Any Segment → Shared Svc VPC)</h2>
+<!-- ============================================================ -->
+<div class="flow-box">
+<div class="flow-path">
+  <strong>EC2</strong> in any workload VPC <span class="arrow">→</span>
+  C-WAN workload segment (Prod or Non-Prod) <span class="arrow">→</span>
+  C-WAN <strong>segment peering</strong> (Prod ↔ Shared Svc, Non-Prod ↔ Shared Svc) <span class="arrow">→</span>
+  <strong>Shared Services Segment</strong> <span class="arrow">→</span>
+  <strong>Shared Services VPC</strong> <span class="arrow">→</span>
+  R53 Resolver Endpoints, CloudWatch, S3 Log Buckets
+</div>
+
+<div class="key-point">
+  <strong>Key:</strong> Shared Services peers directly with Prod and Non-Prod segments via C-WAN segment peering. This is the <strong>only</strong> cross-segment path that does NOT require Inspection traversal — because Shared Services only hosts infrastructure services (DNS, logging, monitoring), not application workloads.
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Design Principles Summary</h2>
+<!-- ============================================================ -->
+<table>
+<tr>
+  <th>Principle</th>
+  <th>Implementation</th>
+</tr>
+<tr>
+  <td><strong>Decentralized Ingress</strong></td>
+  <td>Each workload VPC has its own IGW + ALB/WAF + GWLBe. Per-region IGW provides the internet entry point.</td>
+</tr>
+<tr>
+  <td><strong>Decentralized Egress</strong></td>
+  <td>Each region has its own Regional NAT GW (in the Inspection VPC / Network Account). Egress exits through the regional NGW after inspection.</td>
+</tr>
+<tr>
+  <td><strong>Centralized Inspection</strong></td>
+  <td>ALL traffic (ingress, egress, E-W, N-S, M&amp;A) must traverse the Inspection VPC where GWLB distributes to Palo Alto NVA targets via GENEVE encapsulation. Only exception: Shared Services peering.</td>
+</tr>
+<tr>
+  <td><strong>Cloud WAN in ALL Paths</strong></td>
+  <td>C-WAN segment policy (send-to / send-via) enforces that no traffic bypasses inspection. Segment isolation prevents direct cross-segment communication.</td>
+</tr>
+<tr>
+  <td><strong>DXGW per Region</strong></td>
+  <td>Each region has its own DXGW (<code>dxgw-use1</code>, <code>dxgw-use2</code>, <code>dxgw-usw2</code>) inside the Hybrid segment. No cross-geo leakage.</td>
+</tr>
+<tr>
+  <td><strong>Dual DX per Edge Connect</strong></td>
+  <td>Each DXGW has dual Direct Connect connections for redundancy at each edge connect location.</td>
+</tr>
+<tr>
+  <td><strong>Fabric / CloudOne</strong></td>
+  <td>On-prem traffic traverses the Fiserv Global Backbone / IBB SD-WAN overlay to reach the target Data Center (USOMA01, USCHD01, UCHCZ01, DEFRA, APAC).</td>
+</tr>
+<tr>
+  <td><strong>M&amp;A Isolation</strong></td>
+  <td>Acquired companies enter via dedicated MnA segment through legacy FiservMnA TGW peering. Always inspected before reaching production.</td>
+</tr>
+</table>
+
+</body>
+</html>
