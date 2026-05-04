@@ -1,0 +1,64 @@
+✅ Weekly Team Roll‑Up
+
+Week Ending: 5/1/2026
+
+Portfolio / Team: Cloud & Network Architecture | Etinosa Onaiwu
+
+Prepared By: Etinosa Onaiwu
+
+
+1. Executive Summary
+
+• Concluded design work on two ingress inspection patterns and met with Andy Kistzy to walk through the options and get a buy-in, pros and cons 
+
+• Completed Direct Connect circuits design pattern and had extensive conversation and alignment with Anton.
+
+• Completed BGP setup with all routing and prefix advertisement in place from AWS cloud into CML and vice versa — achieved end-to-end connectivity from cloud workload into CML workload.
+
+• Updated MCBB 3.0 Cloud WAN design to reflect high-level traffic flows for both ingress and egress and traffic flow statement.
+
+• Submitted PTx intake form and attended initial triage call with Mike and Gina alongside the other cloud Network team members — call postponed to next Monday pending leadership decisions requiring Michael's input
+
+• Received approval and access to an AWS account which I intend to use as  workload simulation account— work begins next week to start deploying the resources and testing workload patterns to align with the test use case meeting MCBB3.0 design requirements.
+
+
+2. Key Accomplishments
+
+• Ingress inspection design concluded — evaluated two design patterns, presented pros and cons to Andy Kistzy, and reached a decision on the go-forward design.
+  Impact: Unblocks lab validation and traffic engineering testing for ingress inspection scenarios.
+
+• Direct Connect circuit design completed — design finalized and sign-off received from Anton.
+  Impact: DX circuit design is approved and ready to support the next phase of the build.
+
+• BGP setup and connectivity achieved — all routing and prefix advertisement configured from cloud into CML; end-to-end connectivity validated from cloud workload to CML workload.
+  Impact: Establishes the foundational routing path required for traffic engineering and test case execution.
+
+• MCBB 3.0 Cloud WAN design updated — high-level traffic flows for ingress and egress reflected in the architecture documentation.
+  Impact: Keeps design documentation current and aligned with the build state.
+
+• PTx intake form submitted — attended initial triage call; call rescheduled to next Monday pending Michael's return and leadership alignment on product owner decisions.
+  Impact: PTx process is initiated.
+
+• AWS workload account access approved — account secured for simulating workload environments for ingress/egress and traffic engineering testing.
+  Impact: Unblocks workload simulation work planned for next week.
+
+
+3. Work In Progress
+
+• Traffic engineering pattern configuration — to begin next week, aligned to test use cases defined in the Confluence test plan.
+• Workload account build-out — begin standing up workload environment and testing from the new AWS account next week.
+• Observability Confluence page — to be started next week.
+
+
+4. Risks / Blockers / Dependencies
+
+• PTx triage call delayed — pending Michael's return and resolution of leadership-level product owner questions. Rescheduled to Monday next week. Scott aligned on the delay.
+
+
+5. Planned for Next Week
+
+• Begin traffic engineering pattern work aligned to test use cases in the Confluence test plan.
+• Start building out workload environment in the newly approved AWS account.
+• Begin Observability Confluence page.
+• Attend rescheduled PTx triage call on Monday.
+• Attend MCBB 3.0 project kickoff call with Project Manager Lindsey Deborah.

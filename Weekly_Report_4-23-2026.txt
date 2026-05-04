@@ -1,0 +1,55 @@
+✅ Weekly Team Roll‑Up
+
+Week Ending: 4/23/2026
+
+Portfolio / Team: Cloud & Network Architecture | Etinosa Onaiwu
+
+Prepared By: Etinosa Onaiwu
+
+
+1. Executive Summary
+
+• Attended MCBB 3.0 continuous planning session — collaborated with stakeholders to solidify the go-forward architecture, including routing segmentation decisions and prefix advertisement behavior when routes are advertised into CoreOne.
+
+• Rebuilt Direct Connect virtual interfaces from AWS into CML — following the Summit go-forward agreement on circuit termination (dual circuit per region per DXGW), and validated end-to-end connectivity from an AWS workload through CML down to the lab DCs behind CoreOne through a single DX location.
+
+• Developed the AWS Cloud WAN Multi-Region Test Plan — published to Confluence to provide structured direction on testing to be conducted from AWS into on-premises DCs and within AWS, still work in progress to include inter CSP.
+
+• Attended a session with Selector AI team — demonstrated the MCBB 3.0 build, walked through the cloud resources involved and the traffic flow, and aligned on the observability and visibility outcomes being targeted.
+
+
+2. Key Accomplishments
+
+• MCBB 3.0 continuous planning session — participated in CoreOne and routing segmentation discussions to reach agreement on routing decisions and prefix advertisement strategy at Edge Connects.
+  Impact: Drives alignment on go-forward architecture and ensures routing design decisions are captured before lab validation begins and production build begins.
+
+• Rebuilt DX virtual interfaces (AWS → CML) — reconstructed circuits per the Summit-agreed termination model: dual circuit per region per Direct Connect Gateway. Validated connectivity from an AWS workload through CML to the lab DCs behind simulated CoreOne.
+  Impact: Restores and validates the on-premises connectivity path, unblocking further traffic engineering and BGP testing between AWS and the DC environment.
+
+• AWS Cloud WAN Multi-Region Test Plan developed — document published to Confluence providing structured test direction for AWS-to-on-premises validation.
+  Link: https://enterprise-confluence.onefiserv.net/spaces/FTSNE/pages/1127156283/AWS+Cloud+WAN+Multi-Region+Test+Plan
+  Impact: Establishes a clear testing framework and acceptance criteria for the team, supporting structured DR validation.
+
+• Selector AI session — presented the MCBB 3.0 build, cloud resources in scope, and the observability outcomes being targeted.
+  Impact: Builds shared understanding with the Selector AI team on what visibility is needed across the Cloud WAN environment.
+
+
+3. Work In Progress
+
+• Traffic engineering testing between DC and AWS via CML — BGP path manipulation and Cloud WAN routing policy configuration ongoing.
+• MCBB 3.0 architecture diagram updates — incorporating Gateway Load Balancers, ingress inspection flow, and additional workload accounts into the architecture.
+• Observability and telemetry documentation — initial scoping underway.
+
+
+4. Risks / Blockers / Dependencies
+
+• Additional AWS workload account needed — required to simulate ingress traffic inspection and traffic engineering scenarios; request to be initiated next week.
+
+
+5. Planned for Next Week
+
+• Continue lab configuration for traffic engineering testing — validate BGP path manipulation and Cloud WAN routing policies between the DC (CML) and AWS.
+• Submit PtB intake form — form is complete; session scheduled with Scott on Monday for review and submission.
+• Update MCBB 3.0 architecture diagram — reflect Gateway Load Balancers, ingress inspection flow, and additional workload accounts.
+• Obtain additional AWS account within same AWS organisation to act as workload account for ingress/egress traffic inspection and traffic engineering simulation.
+• Begin building out observability and telemetry documentation.

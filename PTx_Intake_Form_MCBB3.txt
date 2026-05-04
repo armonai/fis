@@ -1,0 +1,205 @@
+PTx New Request Intake — MCBB 3.0
+=====================================
+Prepared by: Etinosa Onaiwu | etinosa.onaiwu@fiserv.com
+Date: April 2026
+
+======================================================
+PTx Initiative
+======================================================
+MCBB 3.0 — AWS Cloud WAN Multi-Region Network Modernization
+
+======================================================
+Requester
+======================================================
+Etinosa Onaiwu / etinosa.onaiwu@fiserv.com
+
+======================================================
+Owner
+======================================================
+Etinosa Onaiwu / etinosa.onaiwu@fiserv.com
+(Update if there is a separate business owner)
+
+======================================================
+Description
+======================================================
+Design, build, and validate an AWS Cloud WAN multi-region network fabric spanning
+us-east-1, us-east-2, and us-west-2 to replace legacy transit architecture. The
+solution delivers segmented connectivity (Prod, Non-Prod, Shared Services, Hybrid,
+Inspection), centralized traffic inspection, Direct Connect hybrid integration via
+two Secure DMZs, and a scalable M&A onboarding path.
+
+======================================================
+Details
+======================================================
+The MCBB 3.0 initiative implements AWS Cloud WAN as the backbone for Fiserv's
+multi-region network. Key components include:
+
+  - Cloud WAN Core Network with 5 segments and policy-driven routing across 3 AWS regions
+  - Regional Inspection VPCs with stateful firewall enforcement for east-west and
+    north-south traffic
+  - Hybrid connectivity via regional Direct Connect Gateways terminating at two Secure
+    DMZs serving four on-premises data centers (DC1-DC4)
+  - M&A acquisition network onboarding path with segment isolation
+  - Internet ingress/egress inspection with WAF and IPS integration
+  - Full observability via VPC Flow Logs, Network Manager events, and SIEM integration
+  - Infrastructure-as-Code via Terraform; test plan documented and under version control
+    in GitLab
+
+======================================================
+Portfolio(s)
+======================================================
+Network Engineering
+(Confirm against the Power BI report — likely Network Infrastructure or Cloud
+Networking portfolio)
+
+======================================================
+Is this for the creation of a new or enhanced offering?
+======================================================
+New offering
+
+======================================================
+Product(s)
+======================================================
+Cloud Networking / AWS Cloud WAN
+(Confirm against existing product catalog in the Power BI report)
+
+======================================================
+Offering(s)
+======================================================
+Multi-Region Cloud Network Fabric
+(Confirm against existing offerings)
+
+======================================================
+Existing Product Engineering ADO PBI #(s)
+======================================================
+[Leave blank or insert if ADO backlog items already exist for this work]
+
+======================================================
+Architecture PBI #(s)
+======================================================
+[Insert existing Network/Security Architecture PBI numbers if already created]
+
+======================================================
+Strategy
+======================================================
+MCBB 3.0 aligns with Fiserv's cloud-first network strategy by replacing legacy
+hub-and-spoke transit architectures with a scalable, policy-driven AWS Cloud WAN
+fabric. This supports Fiserv's broader objectives of improving network agility,
+reducing operational complexity, enabling rapid M&A integration, and enforcing
+consistent security posture across all workload environments. The multi-region design
+ensures resilience and supports business continuity requirements for production
+workloads.
+
+======================================================
+Scope
+======================================================
+In Scope:
+  - AWS Cloud WAN global network spanning us-east-1, us-east-2, and us-west-2
+  - Five network segments: Prod, Non-Prod, Shared Services, Hybrid, Inspection
+  - Regional Inspection VPCs with stateful firewall in each region
+  - Direct Connect hybrid connectivity via two Secure DMZs to four on-premises
+    data centers
+  - M&A acquisition network onboarding path
+  - Internet ingress and egress inspection enforcement
+  - Full validation per the MCBB 3.0 Cloud WAN Multi-Region Test Plan
+
+Out of Scope:
+  - ap-southeast-2 (Sydney) — deferred to follow-on addendum
+  - Application-layer functional testing
+  - On-premises LAN/WAN performance outside the DX demarcation
+
+======================================================
+Goals
+======================================================
+1. Deliver a production-ready multi-region Cloud WAN fabric with segment isolation
+   and inspection enforcement
+2. Establish secure, resilient hybrid connectivity between AWS and all four
+   on-premises data centers via redundant DX and Secure DMZs
+3. Provide a repeatable, policy-driven M&A network onboarding path
+4. Enforce north-south and east-west traffic inspection through regional firewall VPCs
+5. Achieve full observability with centralized logging, alerting, and Network Manager
+   integration
+6. Validate all connectivity, failover, and security controls via a formal acceptance
+   test plan
+
+======================================================
+Requirements
+======================================================
+1. Cloud WAN core network policy must enforce segment isolation by default (default-deny)
+2. All inter-segment traffic must traverse regional Inspection VPCs
+3. Hybrid traffic must land in the Hybrid segment via DXGW and be inspected before
+   reaching Prod/Non-Prod
+4. DMZ-level and circuit-level DX failover must converge within defined SLAs
+   (single circuit < 30s, full DMZ < 90s)
+5. M&A networks must be isolated to designated segments with no lateral movement to
+   non-approved segments
+6. All infrastructure must be managed as code (Terraform) and version controlled
+7. VPC Flow Logs, firewall session logs, and Network Manager events must stream to
+   central log store
+8. Core Network Policy changes must go through change management with dry-run
+   validation before apply
+
+======================================================
+Stakeholders
+======================================================
+  - Etinosa Onaiwu         — Network Engineer / Project Lead
+  - Network Engineering team
+  - Cloud Architecture team
+  - Security Architecture team
+  - On-premises DC / DMZ network team
+  - M&A integration team
+  - Application teams (Prod and Non-Prod workload owners)
+
+======================================================
+Benefits
+======================================================
+Internal:
+  - Simplified network operations through centralized policy-driven routing
+  - Reduced time to onboard new workloads and M&A acquisitions
+  - Improved security posture with consistent inspection enforcement across all regions
+  - Faster failover and higher resilience vs legacy transit architecture
+  - Reduced operational overhead through IaC and automated validation
+
+External / Client:
+  - Improved application availability and latency through optimized multi-region routing
+  - Stronger data isolation between client environments via segment enforcement
+
+======================================================
+Hours and People Needed
+======================================================
+Estimated 3-5 engineers across Network Engineering, Cloud Architecture, and Security
+Architecture.
+Estimated effort: 800-1,200 hours total across design, build, test, and production
+cutover phases.
+(Adjust based on actual project tracking)
+
+======================================================
+Costs
+======================================================
+  - AWS Cloud WAN: per attachment-hour and per GB processed
+  - Direct Connect circuits: existing (no new circuits anticipated for initial scope)
+  - AWS Network Firewall: per firewall endpoint-hour and per GB inspected
+  - Engineering labor: per hours estimate above
+  - Terraform / GitLab tooling: existing licensing
+(Insert actual budget figures if known)
+
+======================================================
+Revenue
+======================================================
+No direct new external revenue associated with this project. Enables faster M&A
+client onboarding which may indirectly support revenue retention and growth.
+
+======================================================
+Expected Production Date
+======================================================
+[Insert target PTO date — project is currently in active lab/POC phase as of
+April 2026]
+
+======================================================
+NOTES — Fields to confirm before submitting
+======================================================
+  1. Portfolio and Product/Offering  — must match exactly what is in the Power BI catalog
+  2. ADO PBI numbers                 — fill in if backlog items already exist
+  3. Owner                           — confirm if there is a separate business or
+                                       portfolio owner vs technical lead
+  4. Expected Production Date        — pull from project plan
