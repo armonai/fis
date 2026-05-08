@@ -1,0 +1,65 @@
+✅ Weekly Team Roll‑Up
+
+Week Ending: 5/8/2026
+
+Portfolio / Team: Cloud & Network Architecture | Etinosa Onaiwu
+
+Prepared By: Etinosa Onaiwu
+
+
+1. Executive Summary
+
+• Attended MCBB 3.0 upgrade kickoff call with Project Manager — aligned on project intent, scope, and expectations.
+
+• Completed the first PTx call to activate MCBB 3.0 and began progressing through the PTx toll gates.
+
+• Integrated the new AWS workload account into Cloud WAN — enables test/lab workloads across different accounts within the Cloud WAN fabric to support the defined test plans.
+
+• Began executing the test plans defined in the Confluence test plan page — completed regional egress internet-bound traffic testing through Cloud WAN with inspection, and validated inter-region reachability across Cloud WAN (prod‑to‑prod, prod‑to‑non‑prod with inspection as required).
+
+• Validated and enforced segmentation — confirmed Prod to Non‑Prod is not reachable without inspection; enforced inspection between Prod ↔ Non‑Prod, Prod ↔ Shared Services, and Prod (us‑east‑1) ↔ on‑prem workload.
+
+• Presented the Cloud Network AWS MCBB 3.0 Cloud WAN design to stakeholders — walked through the problem it solves, benefits, and alternative architectures to gather feedback and socialize the design.
+
+
+2. Key Accomplishments
+
+• MCBB 3.0 kickoff call completed — scope, intent, and expectations aligned with the Project Manager.
+  Impact: Establishes shared understanding and sets the foundation for project execution.
+
+• First PTx call completed — MCBB 3.0 activated and moving through the PTx toll gates.
+  Impact: Formal PTx progression started, keeping the project on its governance track.
+
+• AWS workload account integrated into Cloud WAN — account attached to the fabric and available for lab testing.
+  Impact: Unblocks multi‑account workload testing across the Cloud WAN fabric and enables execution of the defined test plans.
+
+• Regional egress testing completed — internet‑bound traffic successfully routed through Cloud WAN and inspection to the internet.
+  Impact: Validates the egress traffic pattern and inspection enforcement at the regional level.
+
+• Inter‑region reachability validated across Cloud WAN — prod‑to‑prod and prod‑to‑non‑prod (with inspection) flows confirmed.
+  Impact: Confirms the core connectivity model of the MCBB 3.0 design works as intended.
+
+• Segmentation and inspection enforcement validated — Prod ↔ Non‑Prod confirmed not reachable without inspection; inspection enforced between Prod ↔ Non‑Prod, Prod ↔ Shared Services, and Prod (us‑east‑1) ↔ on‑prem workload.
+  Impact: Demonstrates the security segmentation model is functioning and enforceable in the lab.
+
+• MCBB 3.0 Cloud WAN design socialized with stakeholders — presentation delivered covering benefits, problem space, and architecture options.
+  Impact: Builds stakeholder alignment and gathers feedback to refine the design before broader rollout.
+
+
+3. Work In Progress
+
+• Continued lab build‑out to cover the remaining scenarios in the Confluence test plan.
+• Observability and Monitoring documentation — in progress, targeted for completion next week.
+• PTx toll gate progression — continuing through the subsequent gates.
+
+
+4. Risks / Blockers / Dependencies
+
+• None at this time.
+
+
+5. Planned for Next Week
+
+• Complete the Observability and Monitoring document and circulate for review.
+• Continue building out lab configuration to meet the remaining test plans in the Confluence test plan document.
+• Sync with Deborah to walk through build activities completed to date, review pending activities, and align on agreed timelines.
