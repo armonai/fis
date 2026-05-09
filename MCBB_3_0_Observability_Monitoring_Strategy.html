@@ -1,0 +1,546 @@
+<h1>MCBB 3.0 &mdash; Observability &amp; Monitoring Strategy</h1>
+
+<h2>Version Control</h2>
+<table>
+  <thead>
+    <tr><th>Version</th><th>Date</th><th>Changed By</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>v.1</td><td>May 2026</td><td>Onaiwu, Etinosa (Columbus)</td><td>IN PROGRESS</td></tr>
+  </tbody>
+</table>
+
+<h2>Document Status</h2>
+<table>
+  <thead>
+    <tr><th>Date</th><th>Stage</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>May 2026</td><td>Draft</td><td>IN PROGRESS</td></tr>
+  </tbody>
+</table>
+
+<h2>Reviewers and Contributors</h2>
+<table>
+  <thead>
+    <tr><th>Name</th><th>Group</th><th>Role</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Wynston, Michael (US - Florida)</td><td>PE</td><td>Sponsor</td></tr>
+    <tr><td>Uchendu, Onyekachi (Columbus)</td><td>PE</td><td>Contributor</td></tr>
+    <tr><td>Onaiwu, Etinosa (Columbus)</td><td>PE</td><td>Contributor</td></tr>
+    <tr><td>Peters, Scott (Omaha)</td><td>PE</td><td>Contributor</td></tr>
+    <tr><td>Kirichenko, Anton (Remote - AUS NSW)</td><td>PE</td><td>Contributor</td></tr>
+    <tr><td>Butau, Shaima (Berkeley Heights Remote)</td><td>PE</td><td>Contributor</td></tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2>Table of Contents</h2>
+<ol>
+  <li>Overview</li>
+  <li>Design Requirements</li>
+  <li>Observability Stack &mdash; Interim and Target State
+    <ul>
+      <li>3.1 Interim State (AWS-Native)</li>
+      <li>3.2 Target State (Cloud-Agnostic)</li>
+      <li>3.3 Integration Roadmap</li>
+    </ul>
+  </li>
+  <li>Monitoring Layers and Metrics
+    <ul>
+      <li>4.1 Direct Connect / Transit VIF Layer</li>
+      <li>4.2 BGP and Routing Policy Layer</li>
+      <li>4.3 Cloud WAN Core / CNE Layer</li>
+      <li>4.4 Palo Alto NGFW / Inspection VPC Layer</li>
+      <li>4.5 NAT Gateway / Centralized Egress Layer</li>
+      <li>4.6 WAF / ALB Layer</li>
+      <li>4.7 VPC Flow / East-West Enforcement Layer</li>
+      <li>4.8 Hybrid and SLA Layer</li>
+    </ul>
+  </li>
+  <li>Telemetry Source Inventory</li>
+  <li>Collection Methods</li>
+  <li>Alert Strategy</li>
+  <li>Retention</li>
+</ol>
+
+<hr />
+
+<h2>1. Overview</h2>
+<p>This document defines the observability and monitoring strategy for the MCBB 3.0 Multi-Cloud Backbone deployment. It covers what we intend to monitor, which metrics are collected at each layer, which tools collect and process them, and how those tools are integrated into a unified monitoring posture.</p>
+<p>The strategy operates in two states &mdash; an <strong>interim state</strong> using AWS-native tooling deployed during the lab and initial production phase, and a <strong>target state</strong> built around a cloud-agnostic toolset that provides consistent visibility across AWS, Azure, and GCP.</p>
+<p>The MCBB 3.0 environment spans the following components:</p>
+<ul>
+  <li>AWS Cloud WAN core network &mdash; 7 segments (Prod, Non-Prod, Shared Services, Hybrid, Inspection, MnA, Clients)</li>
+  <li>Cloud Network Edges (CNEs) in us-east-1, us-east-2, us-west-2, plus international regions (EMEA, APAC, India, LATAM)</li>
+  <li>7 Direct Connect Gateways &mdash; 3 North American, 4 international (continental)</li>
+  <li>Inspection VPCs with Palo Alto VM-Series firewalls deployed via Gateway Load Balancer (GWLB)</li>
+  <li>Workload VPCs (Prod, Non-Prod, Shared Services) per region</li>
+  <li>Hybrid Edge &mdash; Cisco 8711 Edge Connect switches at Ashburn, Dallas, Chicago, San Jose colos</li>
+  <li>International DXGW tier &mdash; LATAM (sa-east-1), EMEA (eu-west-1, eu-central-1), India (ap-south-1, ap-south-2), APAC (ap-southeast-1, ap-southeast-2)</li>
+  <li>On-premises Core One WAN fabric</li>
+</ul>
+
+<hr />
+
+<h2>2. Design Requirements</h2>
+<p>The following observability Design Requirements (DRs) are formalized in the MCBB 3.0 design document and drive the monitoring scope:</p>
+<table>
+  <thead>
+    <tr><th>DR</th><th>Requirement</th><th>Primary Coverage</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>DR 3.1</strong></td><td>Real-time telemetry on active traffic flows using standard tools and API calls</td><td>CloudWatch (interim) &rarr; ThousandEyes + Splunk (target)</td></tr>
+    <tr><td><strong>DR 3.2</strong></td><td>Real-time SLA metrics reporting &mdash; latency and packet loss</td><td>ThousandEyes</td></tr>
+    <tr><td><strong>DR 3.3</strong></td><td>Historical telemetry on network flows &mdash; top talkers, top requestors, fat flows</td><td>VPC Flow Logs &rarr; S3 (interim) &rarr; Splunk (target)</td></tr>
+    <tr><td><strong>DR 3.4</strong></td><td>Performance metrics reporting via push, pull, or subscription mechanisms</td><td>CloudWatch alarms (interim) &rarr; Selector AI (target)</td></tr>
+  </tbody>
+</table>
+<p>The broader narrative requirement from the design document states: network telemetry must provide real-time visibility into traffic flows, top talkers, fat flows, and related metrics, and network-related data must be retrievable from CSP infrastructure to support internal capacity planning and alerting.</p>
+
+<hr />
+
+<h2>3. Observability Stack &mdash; Interim and Target State</h2>
+
+<h3>3.1 Interim State (AWS-Native)</h3>
+<p>Deployed during the lab and initial production phase. Validates all DRs using AWS-managed services before cloud-agnostic tooling is integrated.</p>
+<table>
+  <thead>
+    <tr><th>Tool</th><th>Role in MCBB 3.0</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Amazon CloudWatch</strong></td><td>Primary metrics collection &mdash; C-WAN attachments, CNE, DX connections, NAT Gateway, GWLB, ALB</td></tr>
+    <tr><td><strong>VPC Flow Logs</strong></td><td>Layer 3/4 traffic records for all production and critical VPCs &mdash; stored to S3 and CloudWatch Logs</td></tr>
+    <tr><td><strong>AWS Network Manager</strong></td><td>Cloud WAN topology visualization, route analytics, event history</td></tr>
+    <tr><td><strong>CloudWatch Alarms</strong></td><td>Alerting on threshold breaches &mdash; DX state, BGP, NAT port exhaustion, GWLB health</td></tr>
+    <tr><td><strong>AWS CloudTrail</strong></td><td>Control plane audit &mdash; DXGW attachment events, config changes</td></tr>
+    <tr><td><strong>Lambda Forwarders</strong></td><td>S3-event-driven log forwarding to cloud-agnostic platform</td></tr>
+  </tbody>
+</table>
+
+<h3>3.2 Target State (Cloud-Agnostic)</h3>
+<p>Long-term monitoring posture. Provides consistent visibility across AWS, Azure, and GCP, and enables cross-CSP correlation and AIOps-driven alerting.</p>
+<table>
+  <thead>
+    <tr><th>Tool</th><th>Role in MCBB 3.0</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>ThousandEyes</strong></td><td>Network path visualization, end-to-end latency and packet loss monitoring, SLA validation for DX and WAN paths across all CSPs and on-prem Edge Connect sites</td></tr>
+    <tr><td><strong>Splunk</strong></td><td>Centralized log aggregation and analytics &mdash; VPC Flow Logs, Palo Alto traffic/system/config logs, C-WAN events, DX metrics, WAF logs, CloudTrail, cross-CSP log correlation</td></tr>
+    <tr><td><strong>Selector AI</strong></td><td>AIOps anomaly detection, intelligent alerting, and automated root cause analysis across the multi-cloud network fabric</td></tr>
+    <tr><td><strong>Forward Networks</strong></td><td>Continuous traffic path verification, LP routing policy enforcement validation, topology diff and change detection</td></tr>
+    <tr><td><strong>Wiz</strong></td><td>Cloud security posture management &mdash; misconfiguration detection, compliance visibility across AWS, Azure, GCP</td></tr>
+    <tr><td><strong>Panorama</strong></td><td>Palo Alto centralized management plane &mdash; Device Groups per region, policy push, log aggregation from all VM-Series instances with direct forwarding to Splunk via syslog log forwarding profile</td></tr>
+  </tbody>
+</table>
+
+<h3>3.3 Integration Roadmap</h3>
+<table>
+  <thead>
+    <tr><th>Phase</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Interim</strong></td><td>Validate all DRs using CloudWatch, VPC Flow Logs, and Network Manager. CloudWatch dashboards show traffic flows; alarms fire on simulated failures.</td></tr>
+    <tr><td><strong>Integration</strong></td><td>Integrate ThousandEyes agents in key VPCs; forward CloudWatch and Flow Logs to Splunk via Lambda and Metric Streams; onboard Selector AI; connect Panorama to Splunk via syslog log forwarding profile; deploy Forward Networks.</td></tr>
+    <tr><td><strong>Validation</strong></td><td>Run parallel monitoring &mdash; AWS-native and target stack simultaneously. Validate parity, then decommission interim-only dashboards.</td></tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2>4. Monitoring Layers and Metrics</h2>
+
+<h3>4.1 Direct Connect / Transit VIF Layer</h3>
+<p>Covers the physical DX circuits and Virtual Interfaces (VIFs) connecting Edge Connect colos to each regional DXGW or continental DXGW. Both North American and international DXGWs carry 2 VIFs per region. With only 2 active VIFs per DXGW, a single VIF failure represents a 50% capacity reduction before any failover action &mdash; making per-VIF health monitoring critical across all regions.</p>
+<p><strong>AWS Reference:</strong> <a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/monitoring-cloudwatch.html">Monitoring AWS Direct Connect with Amazon CloudWatch</a></p>
+<p><strong>What we are monitoring:</strong></p>
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Description</th><th>Tool</th><th>Alert Condition</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>ConnectionState</code></td><td>Physical DX port up/down state</td><td>CloudWatch</td><td>Any transition to DOWN &mdash; immediate page</td></tr>
+    <tr><td><code>ConnectionLightLevelTx</code></td><td>Transmit optical light level dBm</td><td>CloudWatch</td><td>Outside vendor-specified range</td></tr>
+    <tr><td><code>ConnectionLightLevelRx</code></td><td>Receive optical light level dBm</td><td>CloudWatch</td><td>Outside vendor-specified range</td></tr>
+    <tr><td><code>ConnectionBpsEgress</code></td><td>Bytes per second outbound on DX connection</td><td>CloudWatch</td><td>Sustained &gt;85% of provisioned capacity</td></tr>
+    <tr><td><code>ConnectionBpsIngress</code></td><td>Bytes per second inbound on DX connection</td><td>CloudWatch</td><td>Sustained &gt;85% of provisioned capacity</td></tr>
+    <tr><td><code>VirtualInterfaceBpsEgress</code></td><td>Bytes per second per individual VIF &mdash; egress</td><td>CloudWatch</td><td>Traffic fully shifted to one VIF &mdash; indicates peer VIF is down or hashing issue</td></tr>
+    <tr><td><code>VirtualInterfaceBpsIngress</code></td><td>Bytes per second per individual VIF &mdash; ingress</td><td>CloudWatch</td><td>Traffic fully shifted to one VIF &mdash; indicates peer VIF is down or hashing issue</td></tr>
+    <tr><td><code>BGPPeerState</code></td><td>BGP session state per VIF</td><td>CloudWatch</td><td>Any transition away from ESTABLISHED</td></tr>
+    <tr><td>BFD session reconvergence</td><td>Sub-second failover event detection</td><td>ThousandEyes synthetic path + CloudTrail DXGW attachment event</td><td>Any BFD-triggered failover during business hours &mdash; investigate within 15 min</td></tr>
+    <tr><td>End-to-end path latency per Edge colo</td><td>Edge colo to CNE measured latency</td><td>ThousandEyes</td><td>Exceeds SLA baseline by &gt;20%</td></tr>
+    <tr><td>DXGW VIF capacity (all regions)</td><td>Bytes vs. provisioned per VIF &mdash; 2-VIF architecture means any single VIF down is a 50% capacity reduction</td><td>CloudWatch</td><td>Any single VIF carrying 100% of connection load &mdash; peer VIF presumed down</td></tr>
+  </tbody>
+</table>
+<p><strong>Collection method:</strong> CloudWatch native metrics (push, 1-minute resolution) &rarr; CloudWatch Alarms &rarr; SNS &rarr; alert destination. ThousandEyes synthetic agents at each Edge colo for path-level visibility. CloudWatch metrics streamed to Splunk via CloudWatch Metric Streams &rarr; Kinesis Data Firehose &rarr; Splunk HEC.</p>
+
+<hr />
+
+<h3>4.2 BGP and Routing Policy Layer</h3>
+<p>Covers BGP inbound and outbound prefix advertisement between DXGWs and CNEs, and the Cloud WAN routing policy that sets Local Preference (LP) values to enforce geographic DXGW preference per CNE.</p>
+<p>LP assignments per design: CNE us-east-1 prefers DXGW-EAST (LP=300), DXGW-EAST-2 (LP=200), DXGW-WEST (LP=100). CNE us-east-2 prefers DXGW-EAST-2 (LP=300). CNE us-west-2 prefers DXGW-WEST (LP=300).</p>
+<p><strong>AWS References:</strong></p>
+<ul>
+  <li><a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/routing-and-bgp.html">DX Routing Policies and BGP Communities</a></li>
+  <li><a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/direct-connect-cloud-wan.html">AWS Cloud WAN &mdash; DX Gateway Associations</a></li>
+  <li><a href="https://docs.aws.amazon.com/network-manager/latest/cloudwan/cloudwan-route-analysis.html">AWS Network Manager Route Analysis</a></li>
+</ul>
+<p><strong>What we are monitoring:</strong></p>
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Description</th><th>Tool</th><th>Alert Condition</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>BGP inbound prefix count per VIF</td><td>Number of prefixes received from on-premises into each DXGW VIF</td><td>CloudWatch + Network Manager</td><td>Unexpected drop in prefix count &mdash; indicates partial or full route withdrawal from on-prem</td></tr>
+    <tr><td>BGP outbound prefix count per CNE</td><td>Number of prefixes advertised from each CNE back to DXGW &mdash; representing local VPC/segment routes</td><td>CloudWatch + Network Manager</td><td>CNE advertising fewer prefixes than expected &mdash; segment or attachment issue</td></tr>
+    <tr><td>Effective forwarding path per CNE</td><td>Which DXGW is actually preferred at a given moment based on applied LP</td><td>Forward Networks</td><td>Any deviation from intended LP-based preference &mdash; undetectable via CloudWatch alone</td></tr>
+    <tr><td>Routing policy compliance diff</td><td>Continuous comparison of running topology vs. intended design</td><td>Forward Networks</td><td>Any topology change not matching the intended path model</td></tr>
+  </tbody>
+</table>
+<p><strong>Collection method:</strong> CloudWatch native metrics for BGP prefix counts. Network Manager for route analytics and topology visualization &mdash; events streamed to Splunk via CloudWatch Logs &rarr; Kinesis Data Firehose &rarr; Splunk HEC. Forward Networks for continuous BGP state polling and LP policy compliance validation.</p>
+
+<hr />
+
+<h3>4.3 Cloud WAN Core / CNE Layer</h3>
+<p>Covers the 7 Cloud WAN segments and CNE attachment performance across all regions.</p>
+<p><strong>AWS References:</strong></p>
+<ul>
+  <li><a href="https://docs.aws.amazon.com/network-manager/latest/cloudwan/cloudwatch-metrics.html">Cloud WAN CloudWatch Metrics</a></li>
+  <li><a href="https://docs.aws.amazon.com/network-manager/latest/cloudwan/cloudwatch-logs.html">Cloud WAN Events and CloudWatch Logs</a></li>
+</ul>
+<p><strong>What we are monitoring:</strong></p>
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Description</th><th>Tool</th><th>Alert Condition</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>BytesIn</code> per attachment</td><td>Inbound bytes on each VPC or DXGW attachment to a CNE</td><td>CloudWatch</td><td>Sustained zero on an expected-active attachment</td></tr>
+    <tr><td><code>BytesOut</code> per attachment</td><td>Outbound bytes on each VPC or DXGW attachment to a CNE</td><td>CloudWatch</td><td>Sustained zero on an expected-active attachment</td></tr>
+    <tr><td><code>PacketsDropCount</code> per attachment</td><td>Packets dropped at the CNE attachment level</td><td>CloudWatch</td><td>Any non-zero value &mdash; typically indicates routing policy mismatch</td></tr>
+    <tr><td><code>AttachmentState</code></td><td>State of each VPC/DXGW/VPN attachment</td><td>CloudWatch + Network Manager</td><td>Any transition away from AVAILABLE</td></tr>
+    <tr><td>Segment route table size</td><td>Number of routes in each segment&apos;s route table</td><td>Network Manager</td><td>Unexpected growth indicating route leak, or unexpected shrinkage</td></tr>
+    <tr><td>Core network event log</td><td>Control plane events &mdash; attachment state changes, policy updates</td><td>Network Manager events &rarr; Splunk</td><td>Any unplanned policy update or attachment event outside a change window</td></tr>
+    <tr><td>Cross-region inter-CNE bandwidth</td><td>Traffic traversing the Cloud WAN backbone between regions</td><td>CloudWatch</td><td>Baseline deviation &gt;30% &mdash; capacity planning signal</td></tr>
+  </tbody>
+</table>
+<p><strong>Collection method:</strong> CloudWatch native metrics streamed to Splunk via CloudWatch Metric Streams &rarr; Kinesis Data Firehose &rarr; Splunk HEC. Network Manager events &rarr; CloudWatch Logs &rarr; Kinesis Data Firehose &rarr; Splunk HEC. Forward Networks for continuous segment topology validation.</p>
+
+<hr />
+
+<h3>4.4 Palo Alto NGFW / Inspection VPC Layer</h3>
+<p>Covers the Palo Alto VM-Series firewalls deployed via GWLB in each regional Inspection VPC. Panorama manages all VM-Series instances with Device Groups per region. Log forwarding path: VM-Series &rarr; Panorama &rarr; Splunk via syslog log forwarding profile to Splunk HEC.</p>
+
+<p><strong>Traffic Logs</strong> &mdash; every allowed and denied session, App-ID classification, zone, rule hit, bytes, packets.</p>
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Description</th><th>Tool</th><th>Alert / Use</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Top talkers by source IP</td><td>Highest-volume source addresses per time window</td><td>Splunk (pan:traffic)</td><td>DR 3.3 &mdash; capacity planning and anomaly baseline</td></tr>
+    <tr><td>Top requestors by destination</td><td>Most-hit destination IPs and FQDNs</td><td>Splunk</td><td>DR 3.3 &mdash; SaaS usage, partner traffic patterns</td></tr>
+    <tr><td>Fat flows</td><td>Individual sessions carrying disproportionate bandwidth</td><td>Splunk</td><td>DR 3.3 &mdash; identify bulk transfer candidates for QoS</td></tr>
+    <tr><td>Unknown-tcp / unknown-udp volume</td><td>Sessions where App-ID did not classify the application</td><td>Splunk</td><td>Spike indicates uncategorized traffic bypassing App-ID policy</td></tr>
+    <tr><td>Rule hit distribution</td><td>Which firewall rules are being matched and how frequently</td><td>Splunk</td><td>Identifies stale rules and policy gaps</td></tr>
+    <tr><td>East-west inspection hits</td><td>Sessions between spoke VPCs traversing the Inspection Segment</td><td>Splunk</td><td>Validates send-via enforcement is working</td></tr>
+  </tbody>
+</table>
+
+<p><strong>System Logs</strong> &mdash; HA events, interface state, dataplane restarts, Panorama connectivity.</p>
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Description</th><th>Tool</th><th>Alert Condition</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>HA failover event</td><td>Active/Passive state transition</td><td>Splunk &rarr; SNS</td><td><strong>Any occurrence during business hours &mdash; investigate within 15 min</strong></td></tr>
+    <tr><td>Dataplane restart</td><td>PA-VM dataplane process restart</td><td>Splunk</td><td>Any occurrence &mdash; distinguishes crash from auto-scale event</td></tr>
+    <tr><td>Session table utilization</td><td>Current sessions vs. maximum capacity</td><td>Panorama API &rarr; CloudWatch</td><td>&gt;80% of max sessions &mdash; scale-out trigger</td></tr>
+    <tr><td>Dataplane CPU</td><td>CPU utilization per VM-Series instance</td><td>Panorama &rarr; CloudWatch</td><td>&gt;75% sustained over 5 minutes &mdash; App-ID and inspection are CPU-heavy</td></tr>
+    <tr><td>GWLB target health per AZ</td><td>Health status of each PA instance in the GWLB target group</td><td>CloudWatch GWLB metrics</td><td>Any unhealthy target &mdash; instance removed from pool while circuit shows healthy</td></tr>
+    <tr><td>Panorama connectivity</td><td>VM-Series connectivity to Panorama management plane</td><td>System log + Panorama</td><td>Any loss of Panorama connectivity &mdash; policy pushes will fail silently</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Config Logs</strong> &mdash; policy changes, admin logins, commits.</p>
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Description</th><th>Tool</th><th>Alert Condition</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Config change without change ticket</td><td>Commit logged with no corresponding ServiceNow/Jira reference</td><td>Splunk correlation rule</td><td>Any unmatched commit &mdash; change governance enforcement</td></tr>
+    <tr><td>Admin logins outside business hours</td><td>Login events from non-service accounts after hours</td><td>Splunk</td><td>Alert &mdash; potential unauthorized access</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Collection method:</strong> VM-Series &rarr; Panorama (per region Device Group). Panorama log forwarding profile configured with syslog output targeting Splunk HEC &mdash; forwarding Traffic, System, and Config log types directly from Panorama to Splunk without an intermediate storage layer. CloudWatch for GWLB target health (AWS-native &mdash; Panorama does not report GWLB health). Selector AI sits on Splunk feeds for anomaly detection across Traffic and System log types.</p>
+<p><strong>References:</strong> <a href="https://splunk.paloaltonetworks.com/">Palo Alto Networks Add-on for Splunk</a> | <a href="https://docs.paloaltonetworks.com/panorama/10-2/panorama-admin/manage-log-collection/configure-log-forwarding-to-external-destinations">Panorama Log Forwarding to External Destinations</a></p>
+
+<hr />
+
+<h3>4.5 NAT Gateway / Centralized Egress Layer</h3>
+<p>In the Centralized Egress pattern, the NAT Gateway in the Inspection VPC is the single egress IP profile for all spoke VPCs. Port exhaustion here impacts all spokes simultaneously.</p>
+<p><strong>AWS References:</strong></p>
+<ul>
+  <li><a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway-cloudwatch.html">NAT Gateway CloudWatch Metrics</a></li>
+  <li><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Metric-Streams.html">CloudWatch Metric Streams</a></li>
+  <li><a href="https://docs.aws.amazon.com/firehose/latest/dev/create-destination.html#create-destination-splunk">Amazon Kinesis Data Firehose &mdash; Splunk Destination</a></li>
+</ul>
+<p><strong>What we are monitoring:</strong></p>
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Description</th><th>Tool</th><th>Alert Condition</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>ErrorPortAllocation</code></td><td>Failed port allocations &mdash; port exhaustion indicator</td><td>CloudWatch</td><td><strong>Any value &gt;0 in a 5-minute window &mdash; immediate page</strong></td></tr>
+    <tr><td><code>ActiveConnectionCount</code></td><td>Current concurrent NAT connections</td><td>CloudWatch</td><td>&gt;80% of documented regional limit</td></tr>
+    <tr><td><code>IdleTimeoutCount</code></td><td>Connections terminated due to idle timeout</td><td>CloudWatch</td><td>Sustained spike &mdash; indicates connection leak in a spoke application</td></tr>
+    <tr><td><code>PacketsDropCount</code></td><td>Packets dropped at NAT Gateway</td><td>CloudWatch</td><td>Any non-zero sustained value</td></tr>
+    <tr><td><code>BytesOutToDestination</code></td><td>Total outbound bytes through NAT Gateway</td><td>CloudWatch</td><td>Baseline deviation &gt;50% &mdash; potential data exfiltration</td></tr>
+    <tr><td>Source VPC breakdown</td><td>Which spoke VPC is consuming NAT capacity</td><td>VPC Flow Logs &rarr; Splunk</td><td>On-demand investigation &mdash; query in Splunk when <code>ErrorPortAllocation</code> fires</td></tr>
+  </tbody>
+</table>
+<p><strong>Collection method:</strong> NAT Gateway does not produce a native log stream &mdash; metrics are collected via CloudWatch only. For Splunk ingestion, <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Metric-Streams.html">CloudWatch Metric Streams</a> &rarr; Kinesis Data Firehose &rarr; Splunk HEC provides near-real-time metric delivery. CloudWatch Alarms &rarr; SNS for threshold-based alerting. For forensic source VPC analysis on port exhaustion events, VPC Flow Logs are forwarded to Splunk (via Kinesis Data Firehose or Lambda &rarr; Splunk HEC), where source VPC identification queries are run directly in Splunk.</p>
+
+<hr />
+
+<h3>4.6 WAF / ALB Layer</h3>
+<p>Covers the Application Load Balancer and Web Application Firewall deployed in the Inspection VPC, acting as the mandatory L7 proxy and TLS termination point for all inbound internet traffic.</p>
+<p><strong>AWS References:</strong></p>
+<ul>
+  <li><a href="https://docs.aws.amazon.com/waf/latest/developerguide/logging.html">AWS WAF Logging</a></li>
+  <li><a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html">ALB CloudWatch Metrics</a></li>
+</ul>
+<p><strong>What we are monitoring:</strong></p>
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Description</th><th>Tool</th><th>Alert Condition</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>WAF blocked requests by rule group</td><td>Blocked request count per OWASP rule group, custom rule set</td><td>CloudWatch + Splunk</td><td>Spike in SQLi/XSS blocks &mdash; Selector AI anomaly</td></tr>
+    <tr><td>WAF rate limit triggers</td><td>Rate limit rule invocations</td><td>CloudWatch</td><td>Sustained &mdash; potential DDoS or scanning activity</td></tr>
+    <tr><td>WAF geo-block hits</td><td>Requests blocked by geographic rule</td><td>Splunk</td><td>Spike from unexpected geographies</td></tr>
+    <tr><td>WAF sampled requests</td><td>Full HTTP request payload on blocked traffic</td><td>WAF logs &rarr; Splunk</td><td>Security correlation &mdash; Cyber SOC use case</td></tr>
+    <tr><td>ALB 5xx rate</td><td>HTTP 5xx error rate from backend targets</td><td>CloudWatch</td><td>&gt;1% over 5 minutes &mdash; backend health issue</td></tr>
+    <tr><td>ALB target response time (p95/p99)</td><td>Backend latency at 95th and 99th percentile</td><td>CloudWatch</td><td>p99 &gt;2x baseline &mdash; performance degradation</td></tr>
+    <tr><td>ALB healthy host count</td><td>Number of healthy backend targets</td><td>CloudWatch</td><td>Any reduction &mdash; scale-out or failure event</td></tr>
+    <tr><td>TLS negotiation errors</td><td>TLS handshake failures at ALB</td><td>CloudWatch</td><td>Any non-zero sustained value &mdash; certificate or cipher mismatch</td></tr>
+  </tbody>
+</table>
+<p><strong>Collection method:</strong> CloudWatch native metrics for ALB streamed to Splunk via CloudWatch Metric Streams &rarr; Kinesis Data Firehose &rarr; Splunk HEC. WAF logs delivered to Kinesis Data Firehose &rarr; Splunk HEC directly (<a href="https://docs.aws.amazon.com/waf/latest/developerguide/logging-kinesis.html">AWS docs</a>), eliminating the need for an S3 intermediate. Selector AI for anomaly detection on rule group spike patterns.</p>
+
+<hr />
+
+<h3>4.7 VPC Flow / East-West Enforcement Layer</h3>
+<p>VPC Flow Logs are enabled on all production and critical VPCs to validate that spoke-to-spoke traffic is not bypassing the Inspection Segment, and to support historical flow analysis for DR 3.3. The Cloud WAN send-via policy must prevent any direct spoke-to-spoke path &mdash; Flow Log analysis in Splunk confirms this enforcement is working.</p>
+<p><strong>AWS Reference:</strong> <a href="https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html">VPC Flow Logs</a></p>
+<p><strong>What we are monitoring:</strong></p>
+<table>
+  <thead>
+    <tr><th>Metric / Query</th><th>Description</th><th>Tool</th><th>Alert / Use</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Direct spoke-to-spoke flows</td><td>Flow records where source and destination are both spoke VPC CIDRs and the path does not traverse the Inspection VPC ENI</td><td>VPC Flow Logs &rarr; Splunk</td><td><strong>Any hit &mdash; routing policy bypass detected</strong></td></tr>
+    <tr><td>Cross-segment flows</td><td>Traffic between Prod and Non-Prod segments without traversing Inspection VPC</td><td>VPC Flow Logs &rarr; Splunk</td><td>Segment isolation failure &mdash; immediate investigation</td></tr>
+    <tr><td>Cross-region flow volume</td><td>Bytes traversing Cloud WAN backbone between regions</td><td>VPC Flow Logs &rarr; Splunk</td><td>Capacity planning &mdash; DR 3.3</td></tr>
+    <tr><td>Rejected flow count by source</td><td>Flows with REJECT action grouped by source IP</td><td>VPC Flow Logs &rarr; Splunk</td><td>Security signal &mdash; persistent scanning or misconfigured host</td></tr>
+    <tr><td>New destination pairs</td><td>Source-destination IP pairs not seen in prior 7-day baseline</td><td>Splunk / Selector AI</td><td>Selector AI anomaly &mdash; lateral movement candidate</td></tr>
+    <tr><td>Hybrid Segment traffic volume</td><td>On-premises to AWS flow volume</td><td>VPC Flow Logs &rarr; Splunk</td><td>Capacity planning for DX circuits</td></tr>
+  </tbody>
+</table>
+<p><strong>Collection method:</strong> VPC Flow Logs enabled on all production VPCs and critical VPCs &mdash; published to S3 (primary) and CloudWatch Logs (real-time alerting). Flow logs forwarded to Splunk via Kinesis Data Firehose &rarr; Splunk HEC (<a href="https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-kinesis.html">AWS docs</a>) for near-real-time ingestion, or via Lambda &rarr; Splunk HEC where Kinesis Firehose is not available. All flow analysis and east-west enforcement queries are run directly in Splunk. Forward Networks for continuous topology-level bypass path validation.</p>
+
+<hr />
+
+<h3>4.8 Hybrid and SLA Layer</h3>
+<p>Covers end-to-end SLA monitoring between on-premises data centers and AWS CNEs via the DX / Edge Connect path. Maps to DR 3.2.</p>
+<p><strong>Reference:</strong> <a href="https://docs.thousandeyes.com/product-documentation/enterprise-agents/installing/installing-enterprise-agents-in-amazon-web-services">ThousandEyes Enterprise Agent Deployment on AWS</a></p>
+<p><strong>What we are monitoring:</strong></p>
+<table>
+  <thead>
+    <tr><th>Metric</th><th>Description</th><th>Tool</th><th>Alert Condition</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>End-to-end latency: Edge colo &rarr; CNE</td><td>Round-trip latency from each Edge Connect colo to each CNE region</td><td>ThousandEyes synthetic</td><td>&gt;SLA baseline &mdash; configurable per path</td></tr>
+    <tr><td>Packet loss: Edge colo &rarr; CNE</td><td>Packet loss percentage on each DX path</td><td>ThousandEyes</td><td>Any sustained loss &gt;0.1%</td></tr>
+    <tr><td>Path visualization: LP failover</td><td>Visual confirmation that LP=300 DXGW is preferred, and that failover to LP=200 occurs when LP=300 is unavailable</td><td>ThousandEyes path trace</td><td>During simulated failover tests &mdash; must show correct path transition</td></tr>
+    <tr><td>WAN backbone latency: CNE to CNE</td><td>Latency for inter-region traffic across Cloud WAN backbone</td><td>ThousandEyes agents in each region VPC</td><td>&gt;20ms increase from baseline &mdash; backbone congestion signal</td></tr>
+    <tr><td>On-premises to spoke VPC latency</td><td>End-to-end latency from Johns Creek (or other DC) to a specific EC2 instance</td><td>ThousandEyes</td><td>SLA threshold breach &mdash; configurable per application tier</td></tr>
+    <tr><td>Cross-cloud path (AWS to Azure)</td><td>Latency and loss for cross-CSP flows through respective Inspection Segments</td><td>ThousandEyes</td><td>Validates dual-inspection path is not adding unacceptable latency</td></tr>
+  </tbody>
+</table>
+<p><strong>Collection method:</strong> ThousandEyes Enterprise Agents deployed in each regional CNE VPC (shared services or dedicated monitoring subnet) and at each Edge Connect colo. Results feed into ThousandEyes dashboards and forwarded via webhook &rarr; Splunk and Selector AI.</p>
+
+<hr />
+
+<h2>5. Telemetry Source Inventory</h2>
+<p>Complete map of every MCBB 3.0 component, what telemetry it produces, and which tool receives it.</p>
+<table>
+  <thead>
+    <tr><th>Component</th><th>Log / Metric Type</th><th>Interim Destination</th><th>Target Destination</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>DX Connection (per port)</td><td>CloudWatch metrics &mdash; connection state, light level, Bps</td><td>CloudWatch</td><td>CloudWatch Metric Streams &rarr; Kinesis Firehose &rarr; Splunk</td></tr>
+    <tr><td>DX VIF (per VIF)</td><td>CloudWatch metrics &mdash; VIF Bps, BGP peer state, inbound/outbound prefix counts</td><td>CloudWatch</td><td>CloudWatch Metric Streams &rarr; Kinesis Firehose &rarr; Splunk</td></tr>
+    <tr><td>DXGW attachment events</td><td>CloudTrail &mdash; attachment state changes</td><td>CloudTrail &rarr; S3</td><td>CloudTrail &rarr; Kinesis Firehose &rarr; Splunk</td></tr>
+    <tr><td>Cloud WAN CNE (per attachment)</td><td>CloudWatch metrics &mdash; bytes, packets, drop count</td><td>CloudWatch</td><td>CloudWatch Metric Streams &rarr; Kinesis Firehose &rarr; Splunk</td></tr>
+    <tr><td>Network Manager</td><td>Topology events, route analytics</td><td>CloudWatch Logs</td><td>CloudWatch Logs &rarr; Kinesis Firehose &rarr; Splunk</td></tr>
+    <tr><td>Palo Alto VM-Series &mdash; Traffic</td><td>Session-level records, App-ID, rule hits, top talkers</td><td>Panorama &rarr; S3 (interim)</td><td>Panorama &rarr; Splunk HEC (syslog log forwarding profile)</td></tr>
+    <tr><td>Palo Alto VM-Series &mdash; System</td><td>HA events, dataplane state, Panorama connectivity</td><td>Panorama &rarr; S3 (interim)</td><td>Panorama &rarr; Splunk HEC (syslog log forwarding profile)</td></tr>
+    <tr><td>Palo Alto VM-Series &mdash; Config</td><td>Policy commits, admin actions</td><td>Panorama &rarr; S3 (interim)</td><td>Panorama &rarr; Splunk HEC (syslog log forwarding profile)</td></tr>
+    <tr><td>GWLB (per AZ)</td><td>Target health, processed bytes, flows</td><td>CloudWatch</td><td>CloudWatch Metric Streams &rarr; Kinesis Firehose &rarr; Splunk</td></tr>
+    <tr><td>WAF</td><td>Blocked requests, rule hits, sampled requests</td><td>WAF logs &rarr; S3 (interim)</td><td>WAF logs &rarr; Kinesis Firehose &rarr; Splunk</td></tr>
+    <tr><td>ALB</td><td>Request count, 5xx rate, latency, healthy hosts, TLS errors</td><td>CloudWatch</td><td>CloudWatch Metric Streams &rarr; Kinesis Firehose &rarr; Splunk</td></tr>
+    <tr><td>NAT Gateway</td><td>Port allocation errors, active connections, bytes, packets dropped</td><td>CloudWatch</td><td>CloudWatch Metric Streams &rarr; Kinesis Firehose &rarr; Splunk</td></tr>
+    <tr><td>VPC Flow Logs (prod + critical VPCs)</td><td>L3/L4 flow records &mdash; accept/reject, bytes, packets</td><td>S3 + CloudWatch Logs</td><td>Kinesis Firehose &rarr; Splunk HEC (or Lambda &rarr; Splunk HEC)</td></tr>
+    <tr><td>CloudTrail (control plane)</td><td>API calls, config changes, IAM events</td><td>S3</td><td>Kinesis Firehose &rarr; Splunk</td></tr>
+    <tr><td>ThousandEyes (per agent)</td><td>Latency, packet loss, path trace, BGP monitoring</td><td>ThousandEyes dashboard</td><td>ThousandEyes &rarr; Splunk webhook</td></tr>
+    <tr><td>Forward Networks</td><td>Path state, topology diff, routing policy compliance</td><td>Forward Networks dashboard</td><td>Forward Networks &rarr; Splunk + alert</td></tr>
+    <tr><td>Wiz</td><td>Security posture findings, misconfiguration alerts</td><td>Wiz dashboard</td><td>Wiz &rarr; Splunk + ServiceNow</td></tr>
+    <tr><td>Selector AI</td><td>Anomaly events, RCA results</td><td>Alert destination (TBD)</td><td>Selector AI &rarr; PagerDuty / ServiceNow / Teams</td></tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2>6. Collection Methods</h2>
+<table>
+  <thead>
+    <tr><th>Method</th><th>Used By</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>CloudWatch native push</strong></td>
+      <td>All AWS managed services</td>
+      <td>Metrics published automatically at 1-minute resolution. No agent required. Reference: <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/working_with_metrics.html">CloudWatch metrics</a></td>
+    </tr>
+    <tr>
+      <td><strong>VPC Flow Log subscription</strong></td>
+      <td>All production and critical VPCs</td>
+      <td>Published to S3 (primary) and CloudWatch Logs (real-time alerting). Reference: <a href="https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html">VPC Flow Logs</a></td>
+    </tr>
+    <tr>
+      <td><strong>CloudWatch Alarms &rarr; SNS</strong></td>
+      <td>Threshold-based alerting</td>
+      <td>Alarm fires &rarr; SNS topic &rarr; alert destination (PagerDuty / ServiceNow / Teams webhook). Reference: <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html">CloudWatch Alarms</a></td>
+    </tr>
+    <tr>
+      <td><strong>CloudWatch Metric Streams &rarr; Kinesis Data Firehose &rarr; Splunk HEC</strong></td>
+      <td>All CloudWatch metrics requiring Splunk ingestion (DX, Cloud WAN, NAT Gateway, GWLB, ALB)</td>
+      <td>Streaming metric delivery in near-real-time &mdash; no Lambda polling required. Reference: <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Metric-Streams.html">CloudWatch Metric Streams</a> | <a href="https://docs.aws.amazon.com/firehose/latest/dev/create-destination.html#create-destination-splunk">Kinesis Firehose Splunk destination</a></td>
+    </tr>
+    <tr>
+      <td><strong>VPC Flow Logs &rarr; Kinesis Data Firehose &rarr; Splunk HEC</strong></td>
+      <td>VPC Flow Logs real-time ingestion to Splunk</td>
+      <td>Flow logs published directly to Kinesis Data Firehose &rarr; Splunk HEC for near-real-time delivery. Reference: <a href="https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-kinesis.html">Flow logs to Kinesis Data Firehose</a></td>
+    </tr>
+    <tr>
+      <td><strong>Lambda &rarr; Splunk HEC</strong></td>
+      <td>VPC Flow Logs (where Kinesis Firehose is not available), CloudTrail, ad-hoc log forwarding</td>
+      <td>S3 Put event triggers Lambda &rarr; Splunk HEC. Reference: <a href="https://splunkbase.splunk.com/app/1876">Splunk Add-on for AWS</a></td>
+    </tr>
+    <tr>
+      <td><strong>WAF logs &rarr; Kinesis Data Firehose &rarr; Splunk HEC</strong></td>
+      <td>AWS WAF full request logs</td>
+      <td>WAF delivers logs directly to Kinesis Data Firehose &rarr; Splunk HEC &mdash; no S3 intermediate required. Reference: <a href="https://docs.aws.amazon.com/waf/latest/developerguide/logging-kinesis.html">WAF Logging to Kinesis Firehose</a></td>
+    </tr>
+    <tr>
+      <td><strong>Panorama syslog log forwarding profile</strong></td>
+      <td>All Palo Alto VM-Series log types (Traffic, System, Config)</td>
+      <td>VM-Series &rarr; Panorama (Device Group per region) &rarr; Panorama log forwarding profile with syslog output &rarr; Splunk HEC. Reference: <a href="https://docs.paloaltonetworks.com/panorama/10-2/panorama-admin/manage-log-collection/configure-log-forwarding-to-external-destinations">Panorama Log Forwarding to External Destinations</a></td>
+    </tr>
+    <tr>
+      <td><strong>ThousandEyes synthetic agents</strong></td>
+      <td>SLA monitoring (DR 3.2)</td>
+      <td>Enterprise Agents in key VPCs and Edge colos run scheduled path tests, HTTP tests, and BGP monitors. Results forwarded via webhook to Splunk and Selector AI. Reference: <a href="https://docs.thousandeyes.com/product-documentation/enterprise-agents/installing/installing-enterprise-agents-in-amazon-web-services">ThousandEyes Enterprise Agents on AWS</a></td>
+    </tr>
+    <tr>
+      <td><strong>Forward Networks API polling</strong></td>
+      <td>Routing policy compliance</td>
+      <td>Forward Networks continuously polls Cloud WAN API and BGP tables, runs topology diff against intended model.</td>
+    </tr>
+    <tr>
+      <td><strong>Wiz cloud connector</strong></td>
+      <td>Security posture</td>
+      <td>Wiz connects to AWS accounts via cross-account IAM role &mdash; agentless, read-only scan.</td>
+    </tr>
+    <tr>
+      <td><strong>Selector AI ingest</strong></td>
+      <td>AIOps anomaly detection</td>
+      <td>Selector AI receives feeds from Splunk and ThousandEyes via API integration.</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2>7. Alert Strategy</h2>
+<p>Alerts are organized into four severity tiers. Routing of alerts to the correct destination is subject to open decisions &mdash; see the Open Decisions page.</p>
+<table>
+  <thead>
+    <tr><th>Tier</th><th>Criteria</th><th>Response</th><th>Examples</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>P1 &mdash; Immediate</strong></td>
+      <td>Service-impacting, no redundancy available</td>
+      <td>Page on-call &mdash; respond within 15 minutes</td>
+      <td>DX ConnectionState DOWN with no standby VIF; GWLB all targets unhealthy in a region; HA failover during business hours; NAT ErrorPortAllocation &gt;0</td>
+    </tr>
+    <tr>
+      <td><strong>P2 &mdash; Urgent</strong></td>
+      <td>Degraded redundancy, increased risk</td>
+      <td>Alert on-call &mdash; respond within 1 hour</td>
+      <td>Single VIF down (peer VIF absorbing all traffic); BGPPeerState not ESTABLISHED; Palo Alto session table &gt;80%; BGP inbound or outbound prefix count drop</td>
+    </tr>
+    <tr>
+      <td><strong>P3 &mdash; Warning</strong></td>
+      <td>Performance degradation, approaching threshold</td>
+      <td>Ticket created &mdash; respond within 4 hours</td>
+      <td>VIF bandwidth &gt;85% provisioned; ALB p99 latency 2x baseline; ThousandEyes latency SLA breach; CloudWatch PacketsDropCount non-zero</td>
+    </tr>
+    <tr>
+      <td><strong>P4 &mdash; Informational</strong></td>
+      <td>Operational visibility, capacity planning</td>
+      <td>Dashboard / daily report</td>
+      <td>Top talkers, fat flows, rule hit distribution, Forward Networks topology diff (no impact), Wiz posture findings (low severity)</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2>8. Retention</h2>
+<p>Retention applies to the third-party SIEM, observability, and monitoring platforms that are the authoritative store for MCBB 3.0 telemetry. Final retention periods are subject to Fiserv Records Management and GCS compliance requirements.</p>
+<table>
+  <thead>
+    <tr><th>Tool</th><th>Retention</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Splunk</strong></td>
+      <td>Per Fiserv SIEM retention policy</td>
+      <td>Authoritative store for Palo Alto traffic/system/config logs, VPC Flow Logs, CloudWatch metrics, WAF logs, CloudTrail, and cross-CSP events. Hot/warm/cold tiering configured per Splunk cluster policy.</td>
+    </tr>
+    <tr>
+      <td><strong>ThousandEyes</strong></td>
+      <td>90 days (platform default)</td>
+      <td>Path test results, latency baselines, and SLA metrics. Extended retention available via ThousandEyes API export to Splunk.</td>
+    </tr>
+    <tr>
+      <td><strong>Forward Networks</strong></td>
+      <td>Per Forward Networks platform policy</td>
+      <td>Topology snapshots and path compliance diffs. Historical snapshots configurable per deployment.</td>
+    </tr>
+    <tr>
+      <td><strong>Wiz</strong></td>
+      <td>Per Wiz platform policy</td>
+      <td>Security posture findings and misconfiguration events. Critical findings should be exported to Splunk for extended retention.</td>
+    </tr>
+    <tr>
+      <td><strong>Selector AI</strong></td>
+      <td>Per Selector AI platform policy</td>
+      <td>Anomaly events and RCA results. Significant events forwarded to Splunk as the long-term record.</td>
+    </tr>
+  </tbody>
+</table>

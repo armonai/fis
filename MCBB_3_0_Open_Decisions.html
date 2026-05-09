@@ -1,0 +1,83 @@
+<h1>MCBB 3.0 &mdash; Observability &amp; Monitoring: Open Decisions</h1>
+
+<h2>Document Status</h2>
+<table>
+  <thead>
+    <tr><th>Date</th><th>Stage</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>May 2026</td><td>Draft</td><td>IN PROGRESS</td></tr>
+  </tbody>
+</table>
+
+<p>The following decisions require stakeholder alignment before the observability and monitoring architecture is finalized. Each item is tagged with a suggested owner. This page should be updated in place as decisions are resolved.</p>
+
+<hr />
+
+<table>
+  <thead>
+    <tr><th>#</th><th>Decision</th><th>Suggested Owner</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>SIEM destination &mdash; Splunk on-prem, AWS-hosted, or both? Where does the HEC endpoint live?</td>
+      <td>Cyber + PE</td>
+      <td>OPEN</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Splunk retention tiers &mdash; confirm hot/warm/cold periods per log type aligned to GCS and Records Management requirements.</td>
+      <td>Cyber + Records Management</td>
+      <td>OPEN</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Logging AWS account model &mdash; dedicated mcbb3-logging account or per-region accounts?</td>
+      <td>Cloud Platform Team</td>
+      <td>OPEN</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Alert routing &mdash; primary destination (PagerDuty / ServiceNow / Teams)? Severity tier definitions confirmed?</td>
+      <td>Operations + PE</td>
+      <td>OPEN</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>ThousandEyes deployment status &mdash; agents already live in key VPCs, or part of the Integration phase?</td>
+      <td>Network Operations</td>
+      <td>OPEN</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>Forward Networks scope &mdash; starting with lab environment or production?</td>
+      <td>PE</td>
+      <td>OPEN</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>Wiz scope &mdash; AWS accounts already connected? In scope for MCBB 3.0 specifically?</td>
+      <td>Cyber</td>
+      <td>OPEN</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>GuardDuty / Security Hub &mdash; in or out of MCBB 3.0 observability scope?</td>
+      <td>Cyber</td>
+      <td>OPEN</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>Cross-region log aggregation &mdash; central us-east-1 logging account, or regional buckets with cross-account replication?</td>
+      <td>Cloud Platform Team</td>
+      <td>OPEN</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>Panorama syslog log forwarding profile &mdash; confirm Splunk HEC endpoint details and output profile configuration with Network Security team prior to Integration phase.</td>
+      <td>Network Security + PE</td>
+      <td>OPEN</td>
+    </tr>
+  </tbody>
+</table>
