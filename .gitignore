@@ -1,0 +1,20 @@
+# Exclude extracted/temp working folders
+docx_extracted/
+tmp_edit2/
+v10_ext/
+
+# Exclude temp/working files
+~$*
+*.lnk
+*.mso
+*.thmx
+bgp_log.txt
+body_xml.txt
+doc_text.txt
+edit_log.txt
+fix_log.txt
+para_dump.txt
+result.txt
+
+# Exclude Python scripts
+*.py
