@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Versa AWS Instance Upgrade SOP — Confluence Preview</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 960px; margin: 0 auto; padding: 32px 24px; color: #172B4D; background: #fff; font-size: 14px; line-height: 1.6; }
+  h1 { font-size: 28px; font-weight: 700; color: #172B4D; border-bottom: 2px solid #DFE1E6; padding-bottom: 12px; margin-bottom: 20px; }
+  h2 { font-size: 20px; font-weight: 600; color: #172B4D; margin-top: 36px; margin-bottom: 10px; border-bottom: 1px solid #DFE1E6; padding-bottom: 6px; }
+  h3 { font-size: 16px; font-weight: 600; color: #172B4D; margin-top: 24px; margin-bottom: 8px; }
+  p { margin: 8px 0; }
+  hr { border: none; border-top: 2px solid #DFE1E6; margin: 32px 0; }
+
+  /* Meta table */
+  .meta-table { border-collapse: collapse; margin-bottom: 20px; }
+  .meta-table th, .meta-table td { border: 1px solid #DFE1E6; padding: 8px 14px; text-align: left; }
+  .meta-table th { background: #F4F5F7; font-weight: 600; }
+
+  /* TOC */
+  .toc-box { background: #F4F5F7; border: 1px solid #DFE1E6; border-radius: 4px; padding: 16px 20px; margin: 20px 0; display: inline-block; min-width: 260px; }
+  .toc-box .toc-title { font-weight: 700; font-size: 13px; text-transform: uppercase; color: #5E6C84; margin-bottom: 10px; letter-spacing: 0.04em; }
+  .toc-box ol { margin: 0; padding-left: 18px; }
+  .toc-box ol li { margin: 5px 0; }
+  .toc-box a { color: #0052CC; text-decoration: none; font-size: 13px; }
+  .toc-box a:hover { text-decoration: underline; }
+
+  /* Panels */
+  .panel { border-radius: 4px; padding: 14px 16px; margin: 16px 0; }
+  .panel-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .panel.warning { background: #FFFAE6; border-left: 4px solid #FF8B00; }
+  .panel.warning .panel-title { color: #FF8B00; }
+  .panel.note { background: #E6EDFF; border-left: 4px solid #0052CC; }
+  .panel.note .panel-title { color: #0052CC; }
+  .panel.info { background: #E3FCEF; border-left: 4px solid #00875A; }
+  .panel.info .panel-title { color: #00875A; }
+
+  /* Checklist */
+  .task-list { list-style: none; padding: 0; margin: 12px 0; }
+  .task-list li { display: flex; align-items: flex-start; gap: 10px; margin: 7px 0; font-size: 13.5px; }
+  .task-list li input[type=checkbox] { margin-top: 3px; width: 14px; height: 14px; accent-color: #0052CC; flex-shrink: 0; }
+
+  /* Code blocks */
+  .cmd-label { font-weight: 700; font-size: 13px; color: #172B4D; margin: 14px 0 4px 0; }
+  pre { background: #F4F5F7; border: 1px solid #DFE1E6; border-radius: 4px; padding: 12px 16px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 12.5px; color: #172B4D; overflow-x: auto; margin: 0 0 10px 0; white-space: pre; }
+
+  /* Tables */
+  table.data-table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 13.5px; }
+  table.data-table th { background: #F4F5F7; border: 1px solid #DFE1E6; padding: 8px 12px; text-align: left; font-weight: 600; }
+  table.data-table td { border: 1px solid #DFE1E6; padding: 8px 12px; }
+  table.data-table tr:nth-child(even) td { background: #FAFBFC; }
+
+  /* Numbered steps */
+  ol.steps { padding-left: 22px; margin: 10px 0; }
+  ol.steps li { margin: 6px 0; font-size: 13.5px; }
+
+  .fiserv-footer { font-size: 11px; color: #5E6C84; text-align: center; margin-top: 40px; border-top: 1px solid #DFE1E6; padding-top: 12px; }
+  .preview-banner { background: #0052CC; color: white; padding: 8px 14px; border-radius: 4px; font-size: 12px; margin-bottom: 24px; display: inline-block; }
+</style>
+</head>
+<body>
+
+<div class="preview-banner">&#128065; Browser Preview — Confluence macros simulated for visibility</div>
+
+<h1>Versa AWS Instance Upgrade SOP</h1>
+
+<table class="meta-table">
+  <tr><th>Version</th><td>1.0</td></tr>
+  <tr><th>AWS Regions</th><td>US (Baseline) | EMEA | LATAM</td></tr>
+</table>
+
+<div class="toc-box">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#s1">Purpose and Scope</a></li>
+    <li><a href="#s2">Critical Governance Control: Templates vs CLI</a></li>
+    <li><a href="#s3">Pre-Change Validation Checklist</a></li>
+    <li><a href="#s4">Step-by-Step Procedure — Instance Type Change to cx8xlarge</a></li>
+    <li><a href="#s5">Post-Change Validation Checklist</a></li>
+    <li><a href="#s6">Failure Conditions and Escalation Triggers</a></li>
+    <li><a href="#s7">Contacts and Escalation</a></li>
+  </ol>
+</div>
+
+<hr/>
+
+<h2 id="s1">1. Purpose and Scope</h2>
+<p><strong>Purpose:</strong> Provide an execution-ready SOP for upgrading Versa instances in AWS from their current instance type to a larger or smaller instance type (e.g. cx4xlarge to cx8xlarge or vice versa). This SOP is designed for engineering execution across US, EMEA, and LATAM regions and ensures a consistent, validated process for all teams.</p>
+<p><strong>Applies to:</strong> Versa VOS devices running in AWS environments (MCBB scope and applicable regional environments).</p>
+<p><strong>Out of scope:</strong> Non-Versa devices; non-AWS environments; unrelated MCBB components.</p>
+
+<hr/>
+
+<h2 id="s2">2. Critical Governance Control: Templates vs CLI (Non-Negotiable)</h2>
+
+<div class="panel warning">
+  <div class="panel-title">⚠ MANDATORY Policy Statement</div>
+  <p>All persistent configuration changes <strong>MUST</strong> be performed through Versa Director template updates and pushed centrally. Direct CLI configuration is <strong>PROHIBITED</strong> except during an <strong>ACTIVE INCIDENT</strong> requiring immediate service restoration.</p>
+  <p><strong>Reason:</strong> The next template push will overwrite local (CLI) settings, causing silent regression and drift.</p>
+</div>
+
+<div class="panel note">
+  <div class="panel-title">ℹ Incident Exception (ONLY during active incident)</div>
+  <p>CLI actions may be used to restore service immediately. After stabilization, the same changes <strong>MUST</strong> be applied to Versa Director templates and re-pushed to affected device groups. Post-incident reconciliation is <strong>REQUIRED</strong> to eliminate drift and prevent regression.</p>
+</div>
+
+<hr/>
+
+<h2 id="s3">3. Pre-Change Validation Checklist</h2>
+<p>Complete <strong>ALL</strong> items before starting the instance type change.</p>
+
+<ul class="task-list">
+  <li><input type="checkbox"> Confirm AWS console access with appropriate IAM permissions to stop/start EC2 instances and modify instance types</li>
+  <li><input type="checkbox"> Obtain the Versa checklist and cross reference [link to be provided here] — do not proceed without it</li>
+  <li><input type="checkbox"> Confirm maintenance window with your regional lead and notify stakeholders</li>
+  <li><input type="checkbox"> Identify the target Versa instance(s) for your region in the AWS Console (EC2 → Instances)</li>
+  <li><input type="checkbox"> Record the current instance type for rollback reference</li>
+  <li><input type="checkbox"> Confirm instance health: no active alarms, both status checks passing (2/2)</li>
+  <li><input type="checkbox"> Confirm no active sessions or critical traffic is running through the instance</li>
+  <li><input type="checkbox"> Take an AMI snapshot/backup of the instance before proceeding</li>
+  <li><input type="checkbox"> Validate that Versa Director templates are current and no pending pushes are outstanding</li>
+  <li><input type="checkbox"> Open a ticket with the cloud provider to have an engineer on standby</li>
+</ul>
+
+<h3>3.1 Reference Pre-Change Command Set</h3>
+
+<p class="cmd-label">Confirm Versa service health (device CLI)</p>
+<pre>show system details
+show interfaces</pre>
+
+<p class="cmd-label">Check BGP Neighbor Status</p>
+<pre>show routing bgp neighbors
+show routing bgp summary</pre>
+
+<p class="cmd-label">Check Advertised Prefixes (to a specific neighbor)</p>
+<pre>show routing bgp neighbors &lt;neighbor-ip&gt; advertised-routes</pre>
+
+<p class="cmd-label">Check BGP RIB / Routing Table</p>
+<pre>show routing bgp routes
+show routing bgp routes detail</pre>
+
+<p class="cmd-label">Filter by VRF (if using VRFs — common in MCBB)</p>
+<pre>show routing bgp summary vrf &lt;vrf-name&gt;
+show routing bgp neighbors vrf &lt;vrf-name&gt;
+show routing bgp neighbors &lt;neighbor-ip&gt; advertised-routes vrf &lt;vrf-name&gt;
+show routing bgp neighbors &lt;neighbor-ip&gt; received-routes vrf &lt;vrf-name&gt;</pre>
+
+<p class="cmd-label">Check specific prefix</p>
+<pre>show routing bgp routes &lt;prefix/mask&gt;</pre>
+
+<hr/>
+
+<h2 id="s4">4. Step-by-Step Procedure — Instance Type Change to cx8xlarge</h2>
+
+<h3>Phase A — Stop the Instance</h3>
+<ol class="steps">
+  <li>Log into the AWS Console and navigate to <strong>EC2 → Instances</strong>.</li>
+  <li>Locate the target Versa instance for your region.</li>
+  <li>Select the instance → <strong>Actions → Instance State → Stop</strong>.</li>
+  <li>Wait for the instance state to show <strong>Stopped</strong> before proceeding.</li>
+  <li>Confirm that traffic is fully on the other Versa instance and no issues.</li>
+</ol>
+
+<h3>Phase B — Change Instance Type to Required Instance Size</h3>
+<ol class="steps">
+  <li>With the instance in <strong>Stopped</strong> state, select it.</li>
+  <li>Click <strong>Actions → Instance Settings → Change Instance Type</strong>.</li>
+  <li>Select <strong>cx8xlarge</strong> from the instance type dropdown.</li>
+  <li>Click <strong>Apply</strong> to save the change.</li>
+  <li>Confirm the instance type now shows <strong>cx8xlarge</strong> in the instance details panel before starting.</li>
+</ol>
+
+<h3>Phase C — Start the Instance and Validate</h3>
+<ol class="steps">
+  <li>Click <strong>Actions → Instance State → Start</strong>.</li>
+  <li>Wait for the instance to reach <strong>Running</strong> state and pass both status checks (2/2).</li>
+  <li>Confirm the instance type shows <strong>cx8xlarge</strong> in the instance details.</li>
+  <li>Validate Versa application health — confirm services are up and traffic is passing.</li>
+  <li>Check CloudWatch metrics for CPU, memory, and network to confirm normal behavior.</li>
+</ol>
+
+<h3>Phase D — Return-to-Service Gate</h3>
+<div class="panel warning">
+  <div class="panel-title">⚠ NOTE: Do NOT return a Versa node to service until ALL of the following are confirmed</div>
+  <ul class="task-list">
+    <li><input type="checkbox"> Instance type confirmed as <strong>cx8xlarge</strong> in AWS Console</li>
+    <li><input type="checkbox"> Both EC2 status checks passing (2/2)</li>
+    <li><input type="checkbox"> Versa interfaces present and operational</li>
+    <li><input type="checkbox"> Traffic passing normally through the instance</li>
+  </ul>
+  <p>Use the Post-Change Validation Checklist (Section 5) as the gating criteria.</p>
+</div>
+
+<hr/>
+
+<h2 id="s5">5. Post-Change Validation Checklist</h2>
+<p>Complete <strong>ALL</strong> items before marking the change as complete.</p>
+
+<ul class="task-list">
+  <li><input type="checkbox"> Instance type confirmed as <strong>cx8xlarge</strong> in AWS Console</li>
+  <li><input type="checkbox"> Both EC2 status checks passing (2/2)</li>
+  <li><input type="checkbox"> Versa services confirmed UP (no service errors)</li>
+  <li><input type="checkbox"> Interfaces present and operational after restart</li>
+  <li><input type="checkbox"> Traffic passing normally through the instance</li>
+  <li><input type="checkbox"> CloudWatch/monitoring tool metrics reviewed — no anomalies in CPU, memory, or network</li>
+  <li><input type="checkbox"> No active alarms triggered post-change</li>
+  <li><input type="checkbox"> Notify NOC team that change is complete</li>
+  <li><input type="checkbox"> Log the upgrade status in the change management system</li>
+  <li><input type="checkbox"> Document any issues encountered and resolutions applied</li>
+</ul>
+
+<h3>5.1 Reference Post-Change Command Set</h3>
+
+<p class="cmd-label">Confirm Versa service health (device CLI)</p>
+<pre>show system details
+show interfaces</pre>
+
+<p class="cmd-label">Check BGP Neighbor Status</p>
+<pre>show routing bgp neighbors
+show routing bgp summary</pre>
+
+<p class="cmd-label">Check Advertised Prefixes (to a specific neighbor)</p>
+<pre>show routing bgp neighbors &lt;neighbor-ip&gt; advertised-routes</pre>
+
+<p class="cmd-label">Check BGP RIB / Routing Table</p>
+<pre>show routing bgp routes
+show routing bgp routes detail</pre>
+
+<p class="cmd-label">Filter by VRF (if using VRFs — common in MCBB)</p>
+<pre>show routing bgp summary vrf &lt;vrf-name&gt;
+show routing bgp neighbors vrf &lt;vrf-name&gt;
+show routing bgp neighbors &lt;neighbor-ip&gt; advertised-routes vrf &lt;vrf-name&gt;
+show routing bgp neighbors &lt;neighbor-ip&gt; received-routes vrf &lt;vrf-name&gt;</pre>
+
+<p class="cmd-label">Check specific prefix</p>
+<pre>show routing bgp routes &lt;prefix/mask&gt;</pre>
+
+<hr/>
+
+<h2 id="s6">6. Failure Conditions and Escalation Triggers</h2>
+
+<table class="data-table">
+  <thead>
+    <tr><th>Condition</th><th>Action</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Instance fails to reach Running state after start</td><td>Stop immediately, revert instance type to original (noted in pre-change), start and validate, escalate to Butau / Shaima</td></tr>
+    <tr><td>Versa interfaces missing after instance start</td><td>Do NOT return to service; escalate immediately</td></tr>
+    <tr><td>Both EC2 status checks not passing after 10 minutes</td><td>Escalate to Core Team and NOC to bring in additional resource</td></tr>
+    <tr><td>Traffic not passing after change</td><td>Escalate immediately; initiate rollback if needed</td></tr>
+    <tr><td>Configuration drift detected after template push</td><td>Enforce template-only policy; remove local overrides</td></tr>
+  </tbody>
+</table>
+
+<h3>6.1 Rollback Procedure</h3>
+<ol class="steps">
+  <li>Stop the instance immediately.</li>
+  <li>Revert the instance type to the original value (noted in Pre-Change Checklist).</li>
+  <li>Start the instance and validate it returns to a healthy state.</li>
+  <li>Restore from the AMI snapshot taken in Pre-Change if needed.</li>
+  <li>Escalate to core team immediately.</li>
+</ol>
+
+<hr/>
+
+<h2 id="s7">7. Contacts and Escalation</h2>
+<table class="data-table">
+  <thead>
+    <tr><th>Role</th><th>Contact</th></tr>
+  </thead>
+  <tbody>
+    <tr><td></td><td>Michael Wynston</td></tr>
+    <tr><td></td><td>Butau Shaima</td></tr>
+    <tr><td></td><td>Anton Kirichenko</td></tr>
+    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+  </tbody>
+</table>
+
+<div class="fiserv-footer">Fiserv Internal Use Only</div>
+
+</body>
+</html>
